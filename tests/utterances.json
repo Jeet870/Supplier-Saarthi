@@ -1,1 +1,569 @@
-
+[
+  {
+    "id": 1,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Sharma Distributors",
+      "lines": [
+        {
+          "product_name": "Maggi Noodles 70g",
+          "unit": "carton",
+          "expected_qty": 5,
+          "received_qty": 4,
+          "damaged_qty": null,
+          "shortage_qty": 1,
+          "issue": "MISSING_QTY",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Sharma ke yahan se Surf Excel ke do packet fate hue aaye",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Sharma Distributors",
+      "lines": [
+        {
+          "product_name": "Surf Excel Easy Wash 1kg",
+          "unit": "packet",
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": 2,
+          "shortage_qty": null,
+          "issue": "DAMAGED",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Gupta ji ne Tata Salt ki jagah dusra namak bhej diya",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Gupta Wholesale",
+      "lines": [
+        {
+          "product_name": "Tata Salt 1kg",
+          "unit": null,
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": null,
+          "shortage_qty": null,
+          "issue": "WRONG_SKU",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Balaji ke bill mein Parle-G ka rate 5 rupaye zyada laga hai",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Balaji Traders",
+      "lines": [
+        {
+          "product_name": "Parle-G Biscuit",
+          "unit": null,
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": null,
+          "shortage_qty": null,
+          "issue": "PRICE_MISMATCH",
+          "amount_diff_rs": 5
+        }
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Kumar Provisions ke bill mein 20 packet Aashirvaad atta likha hai par 18 aaye",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Kumar Provisions",
+      "lines": [
+        {
+          "product_name": "Aashirvaad Atta 5kg",
+          "unit": "packet",
+          "expected_qty": 20,
+          "received_qty": 18,
+          "damaged_qty": null,
+          "shortage_qty": 2,
+          "issue": "MISSING_QTY",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Sharma ka Maggi 5 mein se 4 carton aaye aur Surf Excel ke 2 packet damage the",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Sharma Distributors",
+      "lines": [
+        {
+          "product_name": "Maggi Noodles 70g",
+          "unit": "carton",
+          "expected_qty": 5,
+          "received_qty": 4,
+          "damaged_qty": null,
+          "shortage_qty": 1,
+          "issue": "MISSING_QTY",
+          "amount_diff_rs": null
+        },
+        {
+          "product_name": "Surf Excel Easy Wash 1kg",
+          "unit": "packet",
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": 2,
+          "shortage_qty": null,
+          "issue": "DAMAGED",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Balaji ne bill ka total 200 rupaye zyada jod diya",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Balaji Traders",
+      "lines": [
+        {
+          "product_name": null,
+          "unit": null,
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": null,
+          "shortage_qty": null,
+          "issue": "INVOICE_MISMATCH",
+          "amount_diff_rs": 200
+        }
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Sharma wala Surf Excel ka ek carton poora bheega hua aaya",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Sharma Distributors",
+      "lines": [
+        {
+          "product_name": "Surf Excel Easy Wash 1kg",
+          "unit": "carton",
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": 1,
+          "shortage_qty": null,
+          "issue": "DAMAGED",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Gupta ji ne 3 carton Parle-G kam bheje",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Gupta Wholesale",
+      "lines": [
+        {
+          "product_name": "Parle-G Biscuit",
+          "unit": "carton",
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": null,
+          "shortage_qty": 3,
+          "issue": "MISSING_QTY",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 10,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Kumar ne Parle-G ki jagah dusra biscuit bhej diya, 2 carton",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Kumar Provisions",
+      "lines": [
+        {
+          "product_name": "Parle-G Biscuit",
+          "unit": "carton",
+          "expected_qty": null,
+          "received_qty": 2,
+          "damaged_qty": null,
+          "shortage_qty": null,
+          "issue": "WRONG_SKU",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Sharma Distributors ka Surf Excel 6 mein se 5 carton aaye",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Sharma Distributors",
+      "lines": [
+        {
+          "product_name": "Surf Excel Easy Wash 1kg",
+          "unit": "carton",
+          "expected_qty": 6,
+          "received_qty": 5,
+          "damaged_qty": null,
+          "shortage_qty": 1,
+          "issue": "MISSING_QTY",
+          "amount_diff_rs": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "group": "delivery",
+    "today": "2026-11-19",
+    "text": "Gupta ne Aashirvaad atta ka rate pichli baar 260 tha, aaj 275 laga diya",
+    "expected": {
+      "record_type": "DELIVERY_DISCREPANCY",
+      "supplier_name": "Gupta Wholesale",
+      "lines": [
+        {
+          "product_name": "Aashirvaad Atta 5kg",
+          "unit": null,
+          "expected_qty": null,
+          "received_qty": null,
+          "damaged_qty": null,
+          "shortage_qty": null,
+          "issue": "PRICE_MISMATCH",
+          "amount_diff_rs": 15
+        }
+      ]
+    }
+  },
+  {
+    "id": 13,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Agli baar Surf Excel par 5% extra dena, Sharma ne bola hai",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Sharma Distributors",
+      "promise_type": "DISCOUNT",
+      "product_name": "Surf Excel Easy Wash 1kg",
+      "value": 5,
+      "value_type": "PERCENT",
+      "unit": null,
+      "applies_to": "NEXT_ORDER",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 14,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Balaji ne bola agle hafte 2 carton Parle-G free denge",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Balaji Traders",
+      "promise_type": "FREE_GOODS",
+      "product_name": "Parle-G Biscuit",
+      "value": 2,
+      "value_type": "QUANTITY",
+      "unit": "carton",
+      "applies_to": "DATE",
+      "follow_up_date": "2026-11-26"
+    }
+  },
+  {
+    "id": 15,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Gupta ji ne kaha jo Tata Salt kam aaya woh kal bhej denge",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Gupta Wholesale",
+      "promise_type": "REPLACEMENT",
+      "product_name": "Tata Salt 1kg",
+      "value": null,
+      "value_type": null,
+      "unit": null,
+      "applies_to": "DATE",
+      "follow_up_date": "2026-11-20"
+    }
+  },
+  {
+    "id": 16,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Kumar Provisions ne 500 rupaye ka credit note dene ka bola hai",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Kumar Provisions",
+      "promise_type": "CREDIT_NOTE",
+      "product_name": null,
+      "value": 500,
+      "value_type": "AMOUNT_RS",
+      "unit": null,
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 17,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Sharma ne 15 din ka udhaar dene ko bola hai",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Sharma Distributors",
+      "promise_type": "CREDIT_PERIOD",
+      "product_name": null,
+      "value": 15,
+      "value_type": "DAYS",
+      "unit": null,
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 18,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Balaji ne Parle-G ka rate 10 rupaye par fix rakhne ka bola hai",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Balaji Traders",
+      "promise_type": "PRICE_LOCK",
+      "product_name": "Parle-G Biscuit",
+      "value": 10,
+      "value_type": "AMOUNT_RS",
+      "unit": null,
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 19,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Surf Excel ke damaged packet Sharma agli delivery mein badal dega",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Sharma Distributors",
+      "promise_type": "REPLACEMENT",
+      "product_name": "Surf Excel Easy Wash 1kg",
+      "value": null,
+      "value_type": null,
+      "unit": "packet",
+      "applies_to": "NEXT_ORDER",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 20,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Gupta wholesale ne bola Maggi par 3 percent discount milega",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Gupta Wholesale",
+      "promise_type": "DISCOUNT",
+      "product_name": "Maggi Noodles 70g",
+      "value": 3,
+      "value_type": "PERCENT",
+      "unit": null,
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 21,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Kumar ne Aashirvaad atta ka 1 carton free dene ka wada kiya hai",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Kumar Provisions",
+      "promise_type": "FREE_GOODS",
+      "product_name": "Aashirvaad Atta 5kg",
+      "value": 1,
+      "value_type": "QUANTITY",
+      "unit": "carton",
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 22,
+    "group": "promise",
+    "today": "2026-11-19",
+    "text": "Sharma ne bola 30 din ka credit period milega",
+    "expected": {
+      "record_type": "SUPPLIER_PROMISE",
+      "supplier_name": "Sharma Distributors",
+      "promise_type": "CREDIT_PERIOD",
+      "product_name": null,
+      "value": 30,
+      "value_type": "DAYS",
+      "unit": null,
+      "applies_to": "NONE",
+      "follow_up_date": null
+    }
+  },
+  {
+    "id": 23,
+    "group": "query",
+    "today": "2026-11-19",
+    "text": "Sharma Distributors ka kya pending hai?",
+    "expected": {
+      "intent": "PENDING_FOR_SUPPLIER",
+      "supplier_name": "Sharma Distributors",
+      "record_type": null,
+      "issue": null
+    }
+  },
+  {
+    "id": 24,
+    "group": "query",
+    "today": "2026-11-19",
+    "text": "Aaj kya pending hai?",
+    "expected": {
+      "intent": "PENDING_ALL",
+      "supplier_name": null,
+      "record_type": null,
+      "issue": null
+    }
+  },
+  {
+    "id": 25,
+    "group": "query",
+    "today": "2026-11-19",
+    "text": "Sharma ka promise kya tha?",
+    "expected": {
+      "intent": "PROMISES_FOR_SUPPLIER",
+      "supplier_name": "Sharma Distributors",
+      "record_type": "SUPPLIER_PROMISE",
+      "issue": null
+    }
+  },
+  {
+    "id": 26,
+    "group": "query",
+    "today": "2026-11-19",
+    "text": "Balaji ka koi damage wala maal pending hai?",
+    "expected": {
+      "intent": "PENDING_FOR_SUPPLIER",
+      "supplier_name": "Balaji Traders",
+      "record_type": "DELIVERY_DISCREPANCY",
+      "issue": "DAMAGED"
+    }
+  },
+  {
+    "id": 27,
+    "group": "edge",
+    "today": "2026-11-19",
+    "text": "Maggi pachas ya pachpan carton aaye, theek se sunayi nahi diya",
+    "expected": {
+      "needs_clarification": true,
+      "reason": "AMBIGUOUS_NUMBER",
+      "field": "received_qty",
+      "candidates": [
+        50,
+        55
+      ]
+    }
+  },
+  {
+    "id": 28,
+    "group": "edge",
+    "today": "2026-11-19",
+    "text": "Raju Traders ne 5 carton kam diye",
+    "expected": {
+      "needs_clarification": true,
+      "reason": "SUPPLIER_NOT_IN_LIST",
+      "field": "supplier_name",
+      "heard": "Raju Traders"
+    }
+  },
+  {
+    "id": 29,
+    "group": "edge",
+    "today": "2026-11-19",
+    "text": "Sharma ke 2 packet Surf Excel fate aaye aur woh bola agli baar replace kar dega",
+    "expected": {
+      "records": [
+        {
+          "record_type": "DELIVERY_DISCREPANCY",
+          "supplier_name": "Sharma Distributors",
+          "lines": [
+            {
+              "product_name": "Surf Excel Easy Wash 1kg",
+              "unit": "packet",
+              "expected_qty": null,
+              "received_qty": null,
+              "damaged_qty": 2,
+              "shortage_qty": null,
+              "issue": "DAMAGED",
+              "amount_diff_rs": null
+            }
+          ]
+        },
+        {
+          "record_type": "SUPPLIER_PROMISE",
+          "supplier_name": "Sharma Distributors",
+          "promise_type": "REPLACEMENT",
+          "product_name": "Surf Excel Easy Wash 1kg",
+          "value": null,
+          "value_type": null,
+          "unit": "packet",
+          "applies_to": "NEXT_ORDER",
+          "follow_up_date": null
+        }
+      ]
+    }
+  },
+  {
+    "id": 30,
+    "group": "edge",
+    "today": "2026-11-19",
+    "text": "Wahi same jaisa pichli baar",
+    "expected": {
+      "needs_clarification": true,
+      "reason": "NOTHING_SPECIFIED",
+      "field": null
+    }
+  }
+]
