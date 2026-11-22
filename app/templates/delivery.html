@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Delivery Check | Munshi Guard{% endblock %}
+
+{% block content %}
+<div class="section-title">🚚 Step 1: Delivery Check</div>
+
+<!-- Supplier Picker -->
+<div class="form-group">
+  <label for="supplier-select" class="form-label">Vyapari Chunein (Optional - AI awaaz se bhi pehchan leta hai):</label>
+  <select id="supplier-select" class="form-select">
+    <option value="">-- Vyapari chunein (Auto-detect) --</option>
+    {% for s in suppliers %}
+    <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Huge Mic Button -->
+<div class="mic-container">
+  <button id="mic-btn" class="mic-button" title="Bolne ke liye dabayein">
+    <span class="mic-icon">🎙️</span>
+  </button>
+  <div class="mic-instruction" id="mic-status">Tap karein aur bolna shuru karein</div>
+</div>
+
+<!-- Live Transcript Display Box -->
+<div class="box-card">
+  <div class="box-title">🔊 Suna Hua (Transcript):</div>
+  <div class="transcript-text" id="transcript-box">
+    "Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye"
+  </div>
+</div>
+
+<!-- Typed Fallback Input Box -->
+<div class="form-group">
+  <label for="text-fallback" class="form-label">Keyboard Fallback (Agar awaaz kaam na kare):</label>
+  <input type="text" id="text-fallback" class="form-input" placeholder="Yahan likhein: Sharma ji ka Maggi 5 mein se 4 aaye...">
+</div>
+
+<!-- Photo Attach & Next Action -->
+<div style="display: flex; gap: 12px; margin-top: 8px;">
+  <button type="button" class="form-input" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-weight: 600;">
+    <span>📷</span>
+    <span>Photo Lagayein</span>
+  </button>
+  <a href="/confirmation" class="btn-haan" style="flex: 1; text-align: center; text-decoration: none; padding: 12px 14px; font-size: 15px;">
+    Confirm Karein ➔
+  </a>
+</div>
+{% endblock %}

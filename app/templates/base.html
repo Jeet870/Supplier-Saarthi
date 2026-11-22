@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>{% block title %}Munshi Guard | Kirana Voice Assistant{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2224%22>🛡️</text></svg>">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <div class="phone-wrapper">
+    <!-- Sticky App Header -->
+    <header class="app-header">
+      <a href="/" class="brand">
+        <div class="brand-icon">🛡️</div>
+        <div>
+          <div class="brand-title">Munshi Guard</div>
+          <div class="brand-tagline">Bolo, confirm karo, yaad rakho</div>
+        </div>
+      </a>
+      <div class="header-status">
+        <span class="status-dot"></span>
+        <span>Online</span>
+      </div>
+    </header>
+
+    <!-- Main View Content -->
+    <main class="app-content">
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Sticky Bottom Navigation -->
+    <nav class="bottom-nav">
+      <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">
+        <span class="nav-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="/delivery" class="nav-item {% if active_page == 'delivery' %}active{% endif %}">
+        <span class="nav-icon">🚚</span>
+        <span>Delivery</span>
+      </a>
+      <a href="/promise" class="nav-item {% if active_page == 'promise' %}active{% endif %}">
+        <span class="nav-icon">🤝</span>
+        <span>Promise</span>
+      </a>
+      <a href="/pending" class="nav-item {% if active_page == 'pending' %}active{% endif %}">
+        <span class="nav-icon">⏳</span>
+        <span>Pending</span>
+      </a>
+      <a href="/suppliers" class="nav-item {% if active_page == 'suppliers' %}active{% endif %}">
+        <span class="nav-icon">🏪</span>
+        <span>Suppliers</span>
+      </a>
+    </nav>
+  </div>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

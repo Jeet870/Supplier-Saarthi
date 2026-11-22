@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Promise Note | Munshi Guard{% endblock %}
+
+{% block content %}
+<div class="section-title">🤝 Step 1: Promise Note (Vyapari ka Wada)</div>
+
+<!-- Supplier Picker -->
+<div class="form-group">
+  <label for="supplier-select-promise" class="form-label">Vyapari ka Naam:</label>
+  <select id="supplier-select-promise" class="form-select">
+    <option value="">-- Vyapari chunein --</option>
+    {% for s in suppliers %}
+    <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+
+<!-- Follow-up Date Field -->
+<div class="form-group">
+  <label for="follow-up-date" class="form-label">Wada pura hone ki tareekh (Follow-up Date):</label>
+  <input type="date" id="follow-up-date" class="form-input" value="2026-11-20">
+</div>
+
+<!-- Huge Mic Button -->
+<div class="mic-container">
+  <button id="mic-btn-promise" class="mic-button" style="background: var(--success);" title="Wada bolne ke liye dabayein">
+    <span class="mic-icon">🎙️</span>
+  </button>
+  <div class="mic-instruction">Wada bolne ke liye tap karein</div>
+</div>
+
+<!-- Transcript Box -->
+<div class="box-card">
+  <div class="box-title">🔊 Suna Hua (Transcript):</div>
+  <div class="transcript-text">
+    "Gupta ji ne kaha jo Tata Salt kam aaya woh kal bhej denge"
+  </div>
+</div>
+
+<!-- Typed Fallback -->
+<div class="form-group">
+  <label for="text-fallback-promise" class="form-label">Keyboard Fallback:</label>
+  <input type="text" id="text-fallback-promise" class="form-input" placeholder="Yahan likhein: Gupta ji kal namak bhejenge...">
+</div>
+
+<a href="/confirmation" class="btn-haan" style="text-align: center; text-decoration: none; padding: 14px; margin-top: 10px;">
+  Confirm Karein ➔
+</a>
+{% endblock %}

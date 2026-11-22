@@ -1,0 +1,29 @@
+{
+  "kind": "delivery",
+  "record": {
+    "record_type": "DELIVERY_DISCREPANCY",
+    "supplier_id": 1,
+    "supplier_name": "Sharma Distributors",
+    "event_date": "2026-11-19",
+    "status": "DRAFT",
+    "lines": [
+      {
+        "product_id": 1,
+        "product_name": "Maggi Noodles 70g",
+        "unit": "carton",
+        "expected_qty": 5,
+        "received_qty": 4,
+        "damaged_qty": null,
+        "shortage_qty": 1,
+        "issue": "MISSING_QTY",
+        "amount_diff_rs": null,
+        "note": null
+      }
+    ],
+    "transcript": "Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye",
+    "photos": [],
+    "confirmed": false
+  },
+  "readback_text": "Sharma Distributors se Maggi 5 carton mangaye the, 4 aaye. 1 carton kam. Sahi hai?",
+  "clarification": null
+}

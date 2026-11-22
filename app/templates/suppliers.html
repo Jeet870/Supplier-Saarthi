@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Suppliers | Munshi Guard{% endblock %}
+
+{% block content %}
+<div class="section-title">🏪 Dukaan ke Vyapari (Suppliers)</div>
+
+<div class="action-cards">
+  {% for s in suppliers %}
+  <a href="/timeline/{{ s.id }}" class="box-card" style="text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <div style="font-size: 17px; font-weight: 700; color: var(--text-main);">{{ s.name }}</div>
+      <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
+        Aliases: {{ s.aliases|join(', ') if s.aliases else 'None' }}
+      </div>
+    </div>
+    <div style="color: var(--primary); font-size: 16px; font-weight: 600;">
+      Timeline ➔
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% endblock %}

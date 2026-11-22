@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Supplier Timeline | Munshi Guard{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start;">
+  <div>
+    <div style="font-size: 22px; font-weight: 700; color: var(--text-main);">{{ supplier_name }}</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Timeline: Deliveries & Promises</div>
+  </div>
+  <a href="https://wa.me/?text={{ whatsapp_text|urlencode }}" target="_blank" class="btn-haan" style="background: #25d366; text-decoration: none; padding: 10px 14px; font-size: 13px; display: flex; align-items: center; gap: 6px;">
+    <span>💬</span>
+    <span>Share WA</span>
+  </a>
+</div>
+
+<div class="section-title" style="margin-top: 10px;">Recent Records</div>
+
+<div class="action-cards">
+  <!-- Sample Delivery Item -->
+  <div class="box-card" style="border-left: 4px solid var(--danger);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 11px; font-weight: 700; color: var(--danger); background: var(--danger-light); padding: 3px 8px; border-radius: 6px;">OPEN</span>
+      <span style="font-size: 12px; color: var(--text-muted);">19 Nov 2026</span>
+    </div>
+    <div style="font-size: 16px; font-weight: 700; margin-top: 8px;">Maggi Noodles 70g (Short 1 carton)</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">5 mangaya tha, sirf 4 aaye.</div>
+  </div>
+
+  <!-- Sample Promise Item -->
+  <div class="box-card" style="border-left: 4px solid var(--warning);">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 11px; font-weight: 700; color: var(--warning); background: var(--warning-light); padding: 3px 8px; border-radius: 6px;">PROMISE</span>
+      <span style="font-size: 12px; color: var(--text-muted);">14 Nov 2026</span>
+    </div>
+    <div style="font-size: 16px; font-weight: 700; margin-top: 8px;">15 Din Ka Udhaar (Credit Period)</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Wada: Next order par 15 din ka udhaar milega.</div>
+  </div>
+</div>
+{% endblock %}

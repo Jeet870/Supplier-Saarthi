@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Munshi Guard | Home{% endblock %}
+
+{% block content %}
+<!-- Dukaan Summary Banner -->
+<a href="/pending" class="summary-card">
+  <div>
+    <div class="summary-title">Dukaan Summary</div>
+    <div class="summary-count">⚠️ {{ open_count|default(3) }} Open Items</div>
+  </div>
+  <div class="summary-arrow">Baqaya Dekhein ➔</div>
+</a>
+
+<!-- Primary Voice Flow CTAs -->
+<div class="section-title">Record Shuru Karein (Bolo aur Save Karo)</div>
+
+<div class="action-cards">
+  <!-- Big Button A: Delivery Check -->
+  <a href="/delivery" class="big-btn big-btn-delivery">
+    <div class="btn-icon-wrapper">🚚</div>
+    <div class="btn-details">
+      <div class="btn-heading">Delivery Check</div>
+      <div class="btn-subtext">Maal aane par kami, toota-phuta ya galat samaan note karein</div>
+      <div class="btn-example">"Sharma ji ka Maggi 5 mein se 4 carton aaye..."</div>
+    </div>
+  </a>
+
+  <!-- Big Button B: Promise Note -->
+  <a href="/promise" class="big-btn big-btn-promise">
+    <div class="btn-icon-wrapper">🤝</div>
+    <div class="btn-details">
+      <div class="btn-heading">Promise Note</div>
+      <div class="btn-subtext">Vyapari ka discount, badlaav ya udhaar ka wada yaad rakhein</div>
+      <div class="btn-example">"Gupta ji ne kaha Tata Salt kal bhej denge..."</div>
+    </div>
+  </a>
+</div>
+
+<!-- Secondary Navigation Grid -->
+<div class="section-title" style="margin-top: 6px;">Baqaya aur Vyapari</div>
+
+<div class="quick-grid">
+  <a href="/pending" class="quick-card">
+    <div class="quick-card-icon">⏳</div>
+    <div class="quick-card-title">Pending Items</div>
+    <div class="quick-card-desc">Sabhi vyapariyon ke khule records</div>
+  </a>
+
+  <a href="/suppliers" class="quick-card">
+    <div class="quick-card-icon">🏪</div>
+    <div class="quick-card-title">Suppliers</div>
+    <div class="quick-card-desc">Vyapari hisaab aur timeline</div>
+  </a>
+</div>
+
+<!-- Flow Note -->
+<div class="disclaimer-text">
+  🎯 <strong>Target: &le; 4 Taps</strong><br>
+  Home [1] ➔ Mic [2] ➔ Haan [3] ➔ Saved!
+</div>
+{% endblock %}
