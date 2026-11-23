@@ -1,4 +1,4 @@
-# Munshi Guard
+# Supplier Saarthi
 
 Voice-first supplier accountability for kirana shops.
 

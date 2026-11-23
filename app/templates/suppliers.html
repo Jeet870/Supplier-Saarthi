@@ -1,23 +1,80 @@
 {% extends "base.html" %}
 
-{% block title %}Suppliers | Munshi Guard{% endblock %}
+{% block title %}Suppliers | Supplier Saarthi{% endblock %}
 
 {% block content %}
-<div class="section-title">🏪 Dukaan ke Vyapari (Suppliers)</div>
+<div class="suppliers-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <div>
+    <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+      🏪 Dukaan ke Vyapari
+      <span style="font-size: 12px; font-weight: 600; background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 9999px;">
+        {{ suppliers|length }} Registered
+      </span>
+    </h2>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+      Apne sabhi registered distributors aur unka hisaab dekhein
+    </div>
+  </div>
+</div>
 
-<div class="action-cards">
+<!-- Search / Quick Filter Input -->
+<div class="form-group" style="margin-bottom: 18px;">
+  <div style="position: relative;">
+    <input type="text" id="supplier-search-input" class="form-input" placeholder="🔍 Vyapari ya alias search karein..." style="padding-left: 36px;" oninput="filterSuppliers()">
+    <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5;">🔍</span>
+  </div>
+</div>
+
+<div class="action-cards" id="suppliers-list">
   {% for s in suppliers %}
-  <a href="/timeline/{{ s.id }}" class="box-card" style="text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <div style="font-size: 17px; font-weight: 700; color: var(--text-main);">{{ s.name }}</div>
-      <div style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">
-        Aliases: {{ s.aliases|join(', ') if s.aliases else 'None' }}
+  <a href="/timeline/{{ s.id }}" class="box-card supplier-item-card" data-supplier-name="{{ s.name|lower }}" data-supplier-alias="{{ (s.aliases|join(' '))|lower if s.aliases else '' }}" style="text-decoration: none; color: inherit; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s ease;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <!-- Initials Avatar -->
+      <div style="width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border: 1px solid #bfdbfe; color: var(--primary); font-weight: 800; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 2px rgba(37,99,235,0.08);">
+        {{ s.name[:2]|upper }}
+      </div>
+      <div>
+        <div style="font-size: 16px; font-weight: 700; color: var(--text-main);">{{ s.name }}</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;">
+          {% if s.aliases %}
+            {% for a in s.aliases %}
+            <span style="font-size: 11px; font-weight: 500; background: #f1f5f9; color: #475569; padding: 1px 7px; border-radius: 6px;">
+              {{ a }}
+            </span>
+            {% endfor %}
+          {% else %}
+            <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">No aliases</span>
+          {% endif %}
+        </div>
       </div>
     </div>
-    <div style="color: var(--primary); font-size: 16px; font-weight: 600;">
-      Timeline ➔
+    <div style="display: flex; align-items: center; gap: 6px; color: var(--primary); font-size: 13px; font-weight: 700; background: var(--primary-light); padding: 8px 12px; border-radius: 8px; flex-shrink: 0;">
+      <span>Timeline</span>
+      <span>➔</span>
     </div>
   </a>
+  {% else %}
+  <div class="box-card" style="text-align: center; padding: 32px 20px;">
+    <div style="font-size: 32px; margin-bottom: 8px;">🏪</div>
+    <div style="font-size: 16px; font-weight: 700; color: var(--text-main);">Koi Vyapari List Mein Nahi Hai</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Jab aap delivery ya promise bolenge, naye vyapari yahan jud jayenge.</div>
+  </div>
   {% endfor %}
 </div>
+
+<script>
+function filterSuppliers() {
+  const query = (document.getElementById('supplier-search-input').value || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('.supplier-item-card');
+  cards.forEach(card => {
+    const name = card.getAttribute('data-supplier-name') || '';
+    const alias = card.getAttribute('data-supplier-alias') || '';
+    if (!query || name.includes(query) || alias.includes(query)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
 {% endblock %}

@@ -3,57 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>{% block title %}Munshi Guard | Kirana Voice Assistant{% endblock %}</title>
+  <title>{% block title %}Supplier Saarthi | Kirana Voice Assistant{% endblock %}</title>
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2224%22>🛡️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
   {% block extra_head %}{% endblock %}
 </head>
 <body>
-  <div class="phone-wrapper">
-    <!-- Sticky App Header -->
-    <header class="app-header">
-      <a href="/" class="brand">
-        <div class="brand-icon">🛡️</div>
-        <div>
-          <div class="brand-title">Munshi Guard</div>
-          <div class="brand-tagline">Bolo, confirm karo, yaad rakho</div>
+  <div class="app-shell">
+    <!-- Professional SaaS Header -->
+    <header class="header-bar">
+      <a href="/" class="brand-group">
+        <div class="brand-badge-icon">🤝</div>
+        <div class="brand-text-col">
+          <div class="brand-heading">
+            Supplier Saarthi
+            <span class="brand-badge-pill">AI</span>
+          </div>
+          <div class="brand-subtext">Bolo, confirm karo, yaad rakho</div>
         </div>
       </a>
-      <div class="header-status">
-        <span class="status-dot"></span>
-        <span>Online</span>
+
+      <!-- Desktop Nav Links -->
+      <nav class="desktop-nav">
+        <a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">Dashboard</a>
+        <a href="/delivery" class="nav-link {% if active_page == 'delivery' %}active{% endif %}">Delivery Check</a>
+        <a href="/promise" class="nav-link {% if active_page == 'promise' %}active{% endif %}">Promise Note</a>
+        <a href="/pending" class="nav-link {% if active_page == 'pending' %}active{% endif %}">Pending</a>
+        <a href="/suppliers" class="nav-link {% if active_page == 'suppliers' %}active{% endif %}">Suppliers</a>
+      </nav>
+
+      <!-- Live Connection Pill -->
+      <div class="connection-status-pill" id="global-status-pill">
+        <span class="status-dot-pulse"></span>
+        <span id="global-status-text">Online</span>
       </div>
     </header>
 
-    <!-- Main View Content -->
-    <main class="app-content">
+    <!-- Main Content Area -->
+    <main class="content-area">
       {% block content %}{% endblock %}
     </main>
 
-    <!-- Sticky Bottom Navigation -->
-    <nav class="bottom-nav">
-      <a href="/" class="nav-item {% if active_page == 'home' %}active{% endif %}">
-        <span class="nav-icon">🏠</span>
+    <!-- Mobile Sticky Bottom Navigation (< 680px) -->
+    <nav class="mobile-nav-bar">
+      <a href="/" class="mobile-tab-item {% if active_page == 'home' %}active{% endif %}">
+        <span class="mobile-tab-icon">🏠</span>
         <span>Home</span>
       </a>
-      <a href="/delivery" class="nav-item {% if active_page == 'delivery' %}active{% endif %}">
-        <span class="nav-icon">🚚</span>
+      <a href="/delivery" class="mobile-tab-item {% if active_page == 'delivery' %}active{% endif %}">
+        <span class="mobile-tab-icon">🚚</span>
         <span>Delivery</span>
       </a>
-      <a href="/promise" class="nav-item {% if active_page == 'promise' %}active{% endif %}">
-        <span class="nav-icon">🤝</span>
+      <a href="/promise" class="mobile-tab-item {% if active_page == 'promise' %}active{% endif %}">
+        <span class="mobile-tab-icon">🤝</span>
         <span>Promise</span>
       </a>
-      <a href="/pending" class="nav-item {% if active_page == 'pending' %}active{% endif %}">
-        <span class="nav-icon">⏳</span>
+      <a href="/pending" class="mobile-tab-item {% if active_page == 'pending' %}active{% endif %}">
+        <span class="mobile-tab-icon">⏳</span>
         <span>Pending</span>
       </a>
-      <a href="/suppliers" class="nav-item {% if active_page == 'suppliers' %}active{% endif %}">
-        <span class="nav-icon">🏪</span>
+      <a href="/suppliers" class="mobile-tab-item {% if active_page == 'suppliers' %}active{% endif %}">
+        <span class="mobile-tab-icon">🏪</span>
         <span>Suppliers</span>
       </a>
     </nav>
   </div>
+  
+  <!-- Client JavaScript Application Bundle -->
+  <script src="/static/app.js"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

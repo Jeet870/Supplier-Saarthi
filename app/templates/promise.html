@@ -1,50 +1,74 @@
 {% extends "base.html" %}
 
-{% block title %}Promise Note | Munshi Guard{% endblock %}
+{% block title %}Promise Note | Supplier Saarthi{% endblock %}
 
 {% block content %}
-<div class="section-title">🤝 Step 1: Promise Note (Vyapari ka Wada)</div>
-
-<!-- Supplier Picker -->
-<div class="form-group">
-  <label for="supplier-select-promise" class="form-label">Vyapari ka Naam:</label>
-  <select id="supplier-select-promise" class="form-select">
-    <option value="">-- Vyapari chunein --</option>
-    {% for s in suppliers %}
-    <option value="{{ s.id }}">{{ s.name }}</option>
-    {% endfor %}
-  </select>
+<div class="section-headline-group">
+  <div class="section-headline">🤝 Step 1: Supplier Promise Note</div>
+  <a href="/" class="section-link">Cancel</a>
 </div>
 
-<!-- Follow-up Date Field -->
-<div class="form-group">
-  <label for="follow-up-date" class="form-label">Wada pura hone ki tareekh (Follow-up Date):</label>
-  <input type="date" id="follow-up-date" class="form-input" value="2026-11-20">
+<!-- Supplier Picker & Date -->
+<div class="box-card" style="padding: 16px;">
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <div class="form-group" style="margin-bottom: 0;">
+      <label for="supplier-select-promise" class="form-label">Vyapari (Supplier):</label>
+      <select id="supplier-select-promise" class="form-select">
+        <option value="">-- Vyapari Chunein --</option>
+        {% for s in suppliers %}
+        <option value="{{ s.id }}">{{ s.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0;">
+      <label for="follow-up-date" class="form-label">Follow-up Date:</label>
+      <input type="date" id="follow-up-date" class="form-input" value="2026-11-24">
+    </div>
+  </div>
 </div>
 
-<!-- Huge Mic Button -->
-<div class="mic-container">
-  <button id="mic-btn-promise" class="mic-button" style="background: var(--success);" title="Wada bolne ke liye dabayein">
-    <span class="mic-icon">🎙️</span>
-  </button>
-  <div class="mic-instruction">Wada bolne ke liye tap karein</div>
+<!-- Voice Station Panel (Promise Theme) -->
+<div class="voice-station-panel">
+  <div class="station-instruction-title" id="mic-status-title-promise">Wada Bolkar Record Karein</div>
+  <div class="station-instruction-subtitle" id="mic-status-promise">
+    Jaise: "Gupta ji ne kaha Tata Salt jo kam aaya kal bhej denge aur agle order par 5% chhoot denge"
+  </div>
+
+  <div class="mic-halo-container">
+    <button id="mic-btn-promise" class="mic-button btn-promise-theme" title="Wada bolne ke liye tap karein">
+      <span class="mic-icon-svg">🎙️</span>
+    </button>
+    <div class="mic-timer-pill" id="recording-timer-promise" style="display: none;">00:00</div>
+  </div>
+
+  <div style="font-size: 12px; color: var(--text-muted);">
+    Microphone tap karein ➔ Wada boliye ➔ Confirm karein
+  </div>
 </div>
 
-<!-- Transcript Box -->
-<div class="box-card">
-  <div class="box-title">🔊 Suna Hua (Transcript):</div>
-  <div class="transcript-text">
+<!-- Live Transcript Card -->
+<div class="transcript-card" style="border-left-color: var(--success);">
+  <div class="transcript-header">
+    <span class="box-title" style="margin-bottom: 0;">🔊 Suna Hua (Live Transcript):</span>
+    <span style="font-size: 11px; font-weight: 700; color: var(--success);">Promise Audio</span>
+  </div>
+  <div class="transcript-body" id="transcript-box-promise">
     "Gupta ji ne kaha jo Tata Salt kam aaya woh kal bhej denge"
   </div>
 </div>
 
-<!-- Typed Fallback -->
-<div class="form-group">
+<!-- Keyboard Fallback -->
+<div class="box-card" style="padding: 16px;">
   <label for="text-fallback-promise" class="form-label">Keyboard Fallback:</label>
-  <input type="text" id="text-fallback-promise" class="form-input" placeholder="Yahan likhein: Gupta ji kal namak bhejenge...">
+  <div style="display: flex; gap: 8px;">
+    <input type="text" id="text-fallback-promise" class="form-input" placeholder="Yahan type karein: Gupta ji kal namak bhejenge...">
+    <button type="button" id="btn-extract-promise-text" class="btn-action-haan" style="white-space: nowrap; padding: 10px 18px; font-size: 14px; box-shadow: none;">
+      Extract Karein ➔
+    </button>
+  </div>
 </div>
 
-<a href="/confirmation" class="btn-haan" style="text-align: center; text-decoration: none; padding: 14px; margin-top: 10px;">
-  Confirm Karein ➔
-</a>
+<!-- Dynamic Confirmation Area -->
+<div id="confirmation-card-area-promise" style="display: none;"></div>
 {% endblock %}

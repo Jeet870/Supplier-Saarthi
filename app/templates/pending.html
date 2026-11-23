@@ -1,42 +1,101 @@
 {% extends "base.html" %}
 
-{% block title %}Pending Items | Munshi Guard{% endblock %}
+{% block title %}Pending Records | Supplier Saarthi{% endblock %}
 
 {% block content %}
-<div class="section-title">⏳ Sabhi Baqaya Records (Pending Items)</div>
-
-<div style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px;">
-  <span style="background: var(--primary); color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">Sabhi (6)</span>
-  <span style="background: #fff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">Deliveries (4)</span>
-  <span style="background: #fff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">Promises (2)</span>
-</div>
-
-<div class="action-cards" style="margin-top: 10px;">
-  <div class="box-card">
-    <div style="font-size: 16px; font-weight: 700;">Sharma Distributors</div>
-    <div style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Maggi Noodles 70g - 1 carton kam (MISSING_QTY)</div>
-    <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 11px; font-weight: 700; color: var(--danger); background: var(--danger-light); padding: 3px 8px; border-radius: 6px;">OPEN</span>
-      <a href="/timeline/1" style="font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none;">Dekhein ➔</a>
-    </div>
-  </div>
-
-  <div class="box-card">
-    <div style="font-size: 16px; font-weight: 700;">Gupta Wholesale</div>
-    <div style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Tata Salt ki jagah dusra namak bhej diya (WRONG_SKU)</div>
-    <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 11px; font-weight: 700; color: var(--danger); background: var(--danger-light); padding: 3px 8px; border-radius: 6px;">DISPUTED</span>
-      <a href="/timeline/2" style="font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none;">Dekhein ➔</a>
-    </div>
-  </div>
-
-  <div class="box-card">
-    <div style="font-size: 16px; font-weight: 700;">Kumar Provisions</div>
-    <div style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">Rs 500 ka credit note dene ka wada (CREDIT_NOTE)</div>
-    <div style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-size: 11px; font-weight: 700; color: var(--warning); background: var(--warning-light); padding: 3px 8px; border-radius: 6px;">PROMISE</span>
-      <a href="/timeline/4" style="font-size: 13px; color: var(--primary); font-weight: 600; text-decoration: none;">Dekhein ➔</a>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+  <div>
+    <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
+      ⏳ Baqaya Records
+      <span style="font-size: 12px; font-weight: 600; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 9999px;">
+        {{ records|length }} Open
+      </span>
+    </h2>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">
+      Sabhi unresolved deliveries aur supplier ke pending vaade
     </div>
   </div>
 </div>
+
+<!-- Category Filter Tabs -->
+<div class="pending-filter-tabs" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
+  <button type="button" class="filter-tab active" data-filter="all" onclick="applyFilter('all', this)" style="background: var(--primary); color: #ffffff; border: 1px solid var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;">
+    Sabhi ({{ records|length }})
+  </button>
+  <button type="button" class="filter-tab" data-filter="DELIVERY" onclick="applyFilter('DELIVERY', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
+    📦 Deliveries
+  </button>
+  <button type="button" class="filter-tab" data-filter="PROMISE" onclick="applyFilter('PROMISE', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
+    🤝 Promises
+  </button>
+</div>
+
+<div class="action-cards" id="pending-records-list">
+  {% for r in records %}
+  {% set rtype = r.record_type|default('DELIVERY_DISCREPANCY') %}
+  <div class="box-card pending-record-card" data-record-type="{% if 'PROMISE' in rtype %}PROMISE{% else %}DELIVERY{% endif %}" style="border-left: 4px solid {% if 'PROMISE' in rtype %}var(--warning){% else %}var(--danger){% endif %};">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px; font-weight: 800; color: var(--text-main);">
+          {{ r.supplier_name|default('Supplier') }}
+        </span>
+        <span style="font-size: 11px; font-weight: 600; background: {% if 'PROMISE' in rtype %}#fef3c7; color: #b45309;{% else %}#fee2e2; color: #dc2626;{% endif %} padding: 2px 7px; border-radius: 6px;">
+          {% if 'PROMISE' in rtype %}PROMISE{% else %}DELIVERY CHECK{% endif %}
+        </span>
+      </div>
+      <span style="font-size: 11px; font-weight: 700; color: {% if r.status == 'OPEN' %}var(--danger){% elif r.status == 'DISPUTED' %}#d97706{% else %}var(--success){% endif %}; background: #f8fafc; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
+        {{ r.status|default('OPEN') }}
+      </span>
+    </div>
+
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px; line-height: 1.4;">
+      {{ r.detail|default(r.summary_text|default('Open discrepancy or promise awaiting settlement')) }}
+    </div>
+
+    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-size: 12px; color: var(--text-muted);">
+        📅 {{ r.event_date|default('Recent') }}
+      </span>
+      <a href="/timeline/{{ r.supplier_id|default(1) }}" style="font-size: 13px; color: var(--primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px;">
+        <span>Timeline Dekhein</span>
+        <span>➔</span>
+      </a>
+    </div>
+  </div>
+  {% else %}
+  <div class="box-card" style="text-align: center; padding: 36px 20px;">
+    <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+    <div style="font-size: 17px; font-weight: 700; color: var(--success); margin-top: 4px;">Kuch Baqaya Nahi!</div>
+    <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Sabhi vyapariyon ka hisaab clear hai.</div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function applyFilter(category, clickedBtn) {
+  // Update button active states
+  const tabs = document.querySelectorAll('.filter-tab');
+  tabs.forEach(tab => {
+    tab.style.background = '#ffffff';
+    tab.style.borderColor = 'var(--border)';
+    tab.style.color = 'var(--text-main)';
+    tab.style.fontWeight = '600';
+  });
+  clickedBtn.style.background = 'var(--primary)';
+  clickedBtn.style.borderColor = 'var(--primary)';
+  clickedBtn.style.color = '#ffffff';
+  clickedBtn.style.fontWeight = '700';
+
+  // Filter cards
+  const cards = document.querySelectorAll('.pending-record-card');
+  cards.forEach(card => {
+    const rType = card.getAttribute('data-record-type');
+    if (category === 'all' || rType === category) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
 {% endblock %}

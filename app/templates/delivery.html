@@ -1,51 +1,70 @@
 {% extends "base.html" %}
 
-{% block title %}Delivery Check | Munshi Guard{% endblock %}
+{% block title %}Delivery Check | Supplier Saarthi{% endblock %}
 
 {% block content %}
-<div class="section-title">🚚 Step 1: Delivery Check</div>
+<div class="section-headline-group">
+  <div class="section-headline">🚚 Step 1: Delivery Discrepancy Capture</div>
+  <a href="/" class="section-link">Cancel</a>
+</div>
 
 <!-- Supplier Picker -->
-<div class="form-group">
-  <label for="supplier-select" class="form-label">Vyapari Chunein (Optional - AI awaaz se bhi pehchan leta hai):</label>
-  <select id="supplier-select" class="form-select">
-    <option value="">-- Vyapari chunein (Auto-detect) --</option>
-    {% for s in suppliers %}
-    <option value="{{ s.id }}">{{ s.name }}</option>
-    {% endfor %}
-  </select>
+<div class="box-card" style="padding: 14px 18px;">
+  <div class="form-group" style="margin-bottom: 0;">
+    <label for="supplier-select" class="form-label" style="display: flex; justify-content: space-between;">
+      <span>Vyapari Chunein (Supplier):</span>
+      <span style="font-size: 11px; color: var(--primary); font-weight: 600;">Auto-matched from speech</span>
+    </label>
+    <select id="supplier-select" class="form-select">
+      <option value="">-- Vyapari Chunein (Optional, AI pehchan leta hai) --</option>
+      {% for s in suppliers %}
+      <option value="{{ s.id }}">{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
 </div>
 
-<!-- Huge Mic Button -->
-<div class="mic-container">
-  <button id="mic-btn" class="mic-button" title="Bolne ke liye dabayein">
-    <span class="mic-icon">🎙️</span>
-  </button>
-  <div class="mic-instruction" id="mic-status">Tap karein aur bolna shuru karein</div>
+<!-- Central Voice Station Panel -->
+<div class="voice-station-panel">
+  <div class="station-instruction-title" id="mic-status-title">Tap Karein aur Bolna Shuru Karein</div>
+  <div class="station-instruction-subtitle" id="mic-status">
+    Hinglish ya Hindi mein boliye: "Sharma ji ka Maggi 5 mein se 4 carton aaye"
+  </div>
+
+  <div class="mic-halo-container">
+    <button id="mic-btn" class="mic-button" title="Bolne ke liye tap karein">
+      <span class="mic-icon-svg">🎙️</span>
+    </button>
+    <div class="mic-timer-pill" id="recording-timer" style="display: none;">00:00</div>
+  </div>
+
+  <div style="font-size: 12px; color: var(--text-muted);">
+    Microphone tap karein ➔ Boliye ➔ Dubara tap karein stop karne ke liye
+  </div>
 </div>
 
-<!-- Live Transcript Display Box -->
-<div class="box-card">
-  <div class="box-title">🔊 Suna Hua (Transcript):</div>
-  <div class="transcript-text" id="transcript-box">
+<!-- Live Audio Transcript Card -->
+<div class="transcript-card">
+  <div class="transcript-header">
+    <span class="box-title" style="margin-bottom: 0;">🔊 Suna Hua (Live Transcript):</span>
+    <span id="transcribe-badge" style="font-size: 11px; font-weight: 700; color: var(--slate-500);">Groq Whisper</span>
+  </div>
+  <div class="transcript-body" id="transcript-box">
     "Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye"
   </div>
 </div>
 
-<!-- Typed Fallback Input Box -->
-<div class="form-group">
+<!-- Keyboard Fallback Section -->
+<div class="box-card" style="padding: 16px;">
   <label for="text-fallback" class="form-label">Keyboard Fallback (Agar awaaz kaam na kare):</label>
-  <input type="text" id="text-fallback" class="form-input" placeholder="Yahan likhein: Sharma ji ka Maggi 5 mein se 4 aaye...">
+  <div style="display: flex; gap: 8px;">
+    <input type="text" id="text-fallback" class="form-input" placeholder="Yahan type karein: Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye...">
+    <button type="button" id="btn-extract-text" class="btn-action-haan" style="white-space: nowrap; padding: 10px 18px; font-size: 14px; box-shadow: none;">
+      Extract Karein ➔
+    </button>
+  </div>
 </div>
 
-<!-- Photo Attach & Next Action -->
-<div style="display: flex; gap: 12px; margin-top: 8px;">
-  <button type="button" class="form-input" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-weight: 600;">
-    <span>📷</span>
-    <span>Photo Lagayein</span>
-  </button>
-  <a href="/confirmation" class="btn-haan" style="flex: 1; text-align: center; text-decoration: none; padding: 12px 14px; font-size: 15px;">
-    Confirm Karein ➔
-  </a>
-</div>
+<!-- Dynamic Confirmation Review Card Container -->
+<div id="confirmation-card-area" style="display: none;"></div>
 {% endblock %}

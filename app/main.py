@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.routers import pages, voice, records
 
-app = FastAPI(title="Munshi Guard")
+app = FastAPI(title="Supplier Saarthi")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(pages.router)
@@ -41,4 +41,3 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.get("/health")
 def health():
     return {"status": "ok"}
-

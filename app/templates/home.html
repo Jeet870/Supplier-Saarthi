@@ -1,62 +1,112 @@
 {% extends "base.html" %}
 
-{% block title %}Munshi Guard | Home{% endblock %}
+{% block title %}Supplier Saarthi | Dashboard{% endblock %}
 
 {% block content %}
-<!-- Dukaan Summary Banner -->
-<a href="/pending" class="summary-card">
-  <div>
-    <div class="summary-title">Dukaan Summary</div>
-    <div class="summary-count">⚠️ {{ open_count|default(3) }} Open Items</div>
-  </div>
-  <div class="summary-arrow">Baqaya Dekhein ➔</div>
-</a>
-
-<!-- Primary Voice Flow CTAs -->
-<div class="section-title">Record Shuru Karein (Bolo aur Save Karo)</div>
-
-<div class="action-cards">
-  <!-- Big Button A: Delivery Check -->
-  <a href="/delivery" class="big-btn big-btn-delivery">
-    <div class="btn-icon-wrapper">🚚</div>
-    <div class="btn-details">
-      <div class="btn-heading">Delivery Check</div>
-      <div class="btn-subtext">Maal aane par kami, toota-phuta ya galat samaan note karein</div>
-      <div class="btn-example">"Sharma ji ka Maggi 5 mein se 4 carton aaye..."</div>
+<!-- Top KPI Metrics Overview -->
+<div class="metrics-row">
+  <a href="/pending" class="metric-card">
+    <div class="metric-label">Open Deliveries</div>
+    <div class="metric-value-row">
+      <div class="metric-number" style="color: var(--danger);">{{ open_deliveries|default(2) }}</div>
+      <div class="metric-icon-pill" style="background: var(--danger-light); color: var(--danger);">🚚</div>
     </div>
   </a>
 
-  <!-- Big Button B: Promise Note -->
-  <a href="/promise" class="big-btn big-btn-promise">
-    <div class="btn-icon-wrapper">🤝</div>
-    <div class="btn-details">
-      <div class="btn-heading">Promise Note</div>
-      <div class="btn-subtext">Vyapari ka discount, badlaav ya udhaar ka wada yaad rakhein</div>
-      <div class="btn-example">"Gupta ji ne kaha Tata Salt kal bhej denge..."</div>
+  <a href="/pending" class="metric-card">
+    <div class="metric-label">Active Promises</div>
+    <div class="metric-value-row">
+      <div class="metric-number" style="color: var(--success);">{{ open_promises|default(1) }}</div>
+      <div class="metric-icon-pill" style="background: var(--success-light); color: var(--success);">🤝</div>
+    </div>
+  </a>
+
+  <a href="/suppliers" class="metric-card">
+    <div class="metric-label">Vyapari Network</div>
+    <div class="metric-value-row">
+      <div class="metric-number" style="color: var(--primary);">{{ total_suppliers|default(4) }}</div>
+      <div class="metric-icon-pill" style="background: var(--primary-light); color: var(--primary);">🏪</div>
     </div>
   </a>
 </div>
 
-<!-- Secondary Navigation Grid -->
-<div class="section-title" style="margin-top: 6px;">Baqaya aur Vyapari</div>
+<!-- Primary Voice Flow Section -->
+<div class="section-headline-group">
+  <div class="section-headline">Instant Voice Capture (Bolo aur Record Karo)</div>
+  <span style="font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px;">⚡ Fast 3-Tap Flow</span>
+</div>
 
-<div class="quick-grid">
-  <a href="/pending" class="quick-card">
-    <div class="quick-card-icon">⏳</div>
-    <div class="quick-card-title">Pending Items</div>
-    <div class="quick-card-desc">Sabhi vyapariyon ke khule records</div>
+<div class="hero-action-grid">
+  <!-- Card 1: Delivery Check -->
+  <a href="/delivery" class="hero-action-card card-delivery">
+    <div>
+      <div class="card-top-row">
+        <div class="card-icon-avatar">🚚</div>
+        <span class="card-badge badge-blue">Maal Aamad Check</span>
+      </div>
+      <div class="card-body-title">Delivery Check</div>
+      <div class="card-body-description">
+        Maal aane par kami, toota-phuta ya galat saaman turant bolkar note karein.
+      </div>
+      <div class="card-sample-pill">
+        <span>🎙️</span>
+        <span>"Sharma ji ka Maggi 5 mein se 4 carton aaye..."</span>
+      </div>
+    </div>
+    <div class="card-cta-bar">
+      <span>Aamad Check Shuru Karein</span>
+      <span>➔</span>
+    </div>
   </a>
 
-  <a href="/suppliers" class="quick-card">
-    <div class="quick-card-icon">🏪</div>
-    <div class="quick-card-title">Suppliers</div>
-    <div class="quick-card-desc">Vyapari hisaab aur timeline</div>
+  <!-- Card 2: Promise Note -->
+  <a href="/promise" class="hero-action-card card-promise">
+    <div>
+      <div class="card-top-row">
+        <div class="card-icon-avatar">🤝</div>
+        <span class="card-badge badge-green">Vyapari Wada</span>
+      </div>
+      <div class="card-body-title">Promise Note</div>
+      <div class="card-body-description">
+        Vyapari ka discount, agla maal badlaav ya udhaar wada hamesha yaad rakhein.
+      </div>
+      <div class="card-sample-pill">
+        <span>🎙️</span>
+        <span>"Gupta ji kal Tata Salt bhejenge, 5% discount..."</span>
+      </div>
+    </div>
+    <div class="card-cta-bar">
+      <span>Wada Note Banayein</span>
+      <span>➔</span>
+    </div>
   </a>
 </div>
 
-<!-- Flow Note -->
-<div class="disclaimer-text">
-  🎯 <strong>Target: &le; 4 Taps</strong><br>
-  Home [1] ➔ Mic [2] ➔ Haan [3] ➔ Saved!
+<!-- Secondary Actions -->
+<div class="section-headline-group" style="margin-top: 10px;">
+  <div class="section-headline">Hisaab aur Records</div>
+  <a href="/suppliers" class="section-link">Sabhi Vyapari Dekhein ➔</a>
+</div>
+
+<div class="metrics-row" style="grid-template-columns: 1fr 1fr;">
+  <a href="/pending" class="box-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
+    <div style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #fffbeb; display: flex; align-items: center; justify-content: center;">⏳</div>
+    <div>
+      <div style="font-size: 15px; font-weight: 700;">Pending Actions</div>
+      <div style="font-size: 12px; color: var(--text-muted);">{{ open_count|default(3) }} records resolution pending</div>
+    </div>
+  </a>
+
+  <a href="/suppliers" class="box-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
+    <div style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; display: flex; align-items: center; justify-content: center;">🏪</div>
+    <div>
+      <div style="font-size: 15px; font-weight: 700;">Suppliers Directory</div>
+      <div style="font-size: 12px; color: var(--text-muted);">Timelines and WhatsApp exports</div>
+    </div>
+  </a>
+</div>
+
+<div class="disclaimer-footer">
+  Supplier Saarthi • Voice-First Accountability for Kirana Stores
 </div>
 {% endblock %}

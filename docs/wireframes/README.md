@@ -1,6 +1,6 @@
-# Munshi Guard: Wireframe Specifications (Task 1C-1 & 1C-3)
+# Supplier Saarthi: Wireframe Specifications (Task 1C-1 & 1C-3)
 
-These wireframe photos represent the mobile interface for **Munshi Guard** (Wisperflow Hackathon 2026).
+These wireframe photos represent the mobile interface for **Supplier Saarthi** (Wisperflow Hackathon 2026).
 The design is optimized for Kirana shopkeepers on Android/iOS smartphones with large touch targets ($\ge 56\text{px}$), high contrast, and colloquial Hinglish terminology.
 
 ---
