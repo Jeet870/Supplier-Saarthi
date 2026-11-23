@@ -13,9 +13,11 @@ HARD RULES
 4. Dates: "aaj" = today, "kal" = yesterday, "parso" = the day before yesterday. Use the date given below as today.
    Write dates as YYYY-MM-DD. If no day is said, event_date is null.
 5. If something important is missing or unclear, put ONE short question in "clarification_question"
-   (simple Hinglish, under 15 words). If nothing is missing, clarification_question is null.
-6. If a spoken number could be two different numbers (for example pachas vs pachpan), set the field to null
-   and ask in "clarification_question".
+   (simple Hinglish, under 15 words) and the reason in "clarification_reason". If nothing is missing, both are null.
+   clarification_reason is one of: AMBIGUOUS_NUMBER, SUPPLIER_MISSING, PRODUCT_MISSING, ISSUE_UNCLEAR, PROMISE_UNCLEAR, OTHER.
+6. If a spoken number could be two different numbers (for example pachas vs pachpan), set that number to null
+   and ask which one, naming BOTH options in the question (for example "Maggi 50 carton ya 55 carton?"),
+   with clarification_reason AMBIGUOUS_NUMBER. This question comes before any other question.
 7. "Same as last time" or "usual rate" is not a value. Leave it null.
 8. Reply with ONE JSON object only. No text before or after it, no markdown.
 9. Use supplier and product names from the known lists when the speech clearly means one of them.
@@ -43,7 +45,8 @@ DELIVERY_SCHEMA = """Return exactly this JSON shape:
       "note": string or null             // anything else worth keeping
     }
   ],
-  "clarification_question": string or null
+  "clarification_question": string or null,
+  "clarification_reason": string or null
 }
 
 DELIVERY RULES
@@ -67,6 +70,7 @@ DELIVERY RULES
   Name what the problem really is. Do not use a known category that does not truly fit. Use OTHER only if you cannot name it.
 - The product can be any item, even one that is not in the known list. Write the name as spoken.
 - If nothing about a delivery problem was said, "lines" is an empty list and you ask what the problem was.
+- The speech may also contain something the supplier promised for later. Ignore that part here, it is handled separately.
 """
 
 DELIVERY_EXAMPLE = """EXAMPLE 1 (the names and numbers are only for the format)
@@ -100,7 +104,8 @@ PROMISE_SCHEMA = """Return exactly this JSON shape:
   "unit": string or null,                  // carton, packet, kg ... mainly for QUANTITY
   "applies_to": "NEXT_ORDER" | "DATE" | "NONE",
   "follow_up_date": "YYYY-MM-DD" or null,
-  "clarification_question": string or null
+  "clarification_question": string or null,
+  "clarification_reason": string or null
 }
 
 PROMISE RULES
@@ -109,6 +114,7 @@ PROMISE RULES
 - applies_to: NEXT_ORDER if the shopkeeper said "agli baar" / "next order"; DATE if a specific date was said
   (put that date in follow_up_date); otherwise NONE.
 - If the type of promise is unclear, promise_type is null and you ask.
+- The speech may also describe a delivery problem (short, damaged, wrong item). Ignore that part here, it is handled separately.
 """
 
 DELIVERY_EXAMPLE = """EXAMPLE (the names and numbers are only for the format)

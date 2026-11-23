@@ -1,8 +1,9 @@
 """Voice routes.
 
 POST /api/transcribe  audio file in, {"text": "..."} out (Groq Whisper)
-POST /api/extract     {"text": "..."} in, a DRAFT record out (see docs/api-contract.md)
+POST /api/extract     {"text": "..."} in, a DRAFT record, a read-back sentence and a question if needed out
 """
+from concurrent.futures import ThreadPoolExecutor
 from typing import Literal, Optional
 
 from fastapi import APIRouter, File, UploadFile
@@ -11,7 +12,8 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.matching import load_lists
-from app.voice.extract import DELIVERY, PROMISE, classify_kind, extract_record
+from app.voice.extract import DELIVERY, PROMISE, classify_kinds, extract_record
+from app.voice.readback import build_readback
 
 router = APIRouter()
 
@@ -100,11 +102,6 @@ class ExtractRequest(BaseModel):
     kind: Optional[Literal["delivery", "promise"]] = None
 
 
-def _placeholder_readback(transcript: str) -> str:
-    # Task 3A-1 replaces this with the proper read-back sentence.
-    return f'Maine suna: "{transcript}". Sahi hai?'
-
-
 def _empty_record(record_type: Optional[str], transcript: str) -> dict:
     """Same keys as a real record, but every value empty, for sentences we could not understand."""
     return {
@@ -120,6 +117,28 @@ def _empty_record(record_type: Optional[str], transcript: str) -> dict:
     }
 
 
+def _item(kind: str, record_type: str, result, text: str) -> dict:
+    """One answer: kind, record, readback_text, clarification (+ a short reason code)."""
+    if result.record is None:  # the AI could not fill a required part, so we ask back
+        return {
+            "kind": kind,
+            "record": _empty_record(record_type, text),
+            "readback_text": None,
+            "clarification": result.clarification_question,
+            "clarification_reason": result.clarification_reason,
+        }
+    record = result.record.model_dump(mode="json")
+    asking = bool(result.clarification_question)
+    return {
+        "kind": kind,
+        "record": record,
+        # Never read back a record that still has an open question.
+        "readback_text": None if asking else (build_readback(record) or None),
+        "clarification": result.clarification_question,
+        "clarification_reason": result.clarification_reason,
+    }
+
+
 @router.post("/api/extract")
 def extract(body: ExtractRequest):
     text = (body.text or "").strip()
@@ -132,34 +151,35 @@ def extract(body: ExtractRequest):
         return _error(f"Could not read the supplier and product lists: {e}", 500)
 
     try:
-        kind = body.kind or classify_kind(text)
+        kinds = [body.kind] if body.kind else classify_kinds(text)
     except Exception as e:
         return _error(f"Could not understand the sentence: {e}", 502)
 
-    if kind == "unclear":
+    if kinds == ["unclear"]:
         return {
             "kind": "unclear",
             "record": _empty_record(None, text),
             "readback_text": None,
             "clarification": "Samajh nahi aaya. Delivery ki dikkat hai ya supplier ka wada? Dobara bolo.",
+            "clarification_reason": "NOTHING_SPECIFIED",
         }
 
-    record_type = DELIVERY if kind == "delivery" else PROMISE
-    result = extract_record(record_type, text, suppliers, products)
-    if result.error:
-        return _error(result.error, 502)
+    record_types = [DELIVERY if k == "delivery" else PROMISE for k in kinds]
+    with ThreadPoolExecutor(max_workers=len(record_types)) as pool:
+        futures = [pool.submit(extract_record, rt, text, suppliers, products) for rt in record_types]
+        results = [f.result() for f in futures]
 
-    if result.record is None:  # the model could not fill the required part, so we ask back
-        return {
-            "kind": kind,
-            "record": _empty_record(record_type, text),
-            "readback_text": None,
-            "clarification": result.clarification_question,
-        }
+    items = []
+    for kind, record_type, result in zip(kinds, record_types, results):
+        if result.error:
+            return _error(result.error, 502)
+        if items and result.record is None:
+            continue  # an extra record that could not be filled is dropped, it must not hide the main one
+        items.append(_item(kind, record_type, result, text))
 
-    return {
-        "kind": kind,
-        "record": result.record.model_dump(mode="json"),
-        "readback_text": None if result.clarification_question else _placeholder_readback(text),
-        "clarification": result.clarification_question,
-    }
+    response = dict(items[0])
+    if len(items) > 1:
+        # One sentence with a delivery problem AND a promise: the first goes on top as always,
+        # the rest are listed here in the same shape. Each is confirmed on its own.
+        response["additional"] = items[1:]
+    return response

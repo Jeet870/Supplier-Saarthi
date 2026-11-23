@@ -29,18 +29,36 @@ def _norm(text: str) -> str:
     return " ".join(re.sub(r"[^a-z0-9]+", " ", text.lower()).split())
 
 
-def match_id(spoken: Optional[str], items: list[dict]) -> tuple[Optional[int], Optional[str]]:
+# Business words that many suppliers share. "Raju Traders" must NOT match "Balaji Traders" just
+# because both end in "Traders", so these words are ignored when comparing supplier names.
+SUPPLIER_GENERIC_WORDS = frozenset({
+    "traders", "trader", "distributors", "distributor", "distributer", "distributers",
+    "wholesale", "wholesalers", "wholesaler", "provisions", "provision", "enterprises", "enterprise",
+    "store", "stores", "general", "agency", "agencies", "company", "co", "and", "ji", "bhai", "sir",
+})
+
+
+def _core(text: str, ignore: frozenset) -> str:
+    return " ".join(t for t in _norm(text).split() if t not in ignore)
+
+
+def match_id(
+    spoken: Optional[str], items: list[dict], ignore_words: frozenset = frozenset()
+) -> tuple[Optional[int], Optional[str]]:
     """items: [{"id": 1, "name": "...", "aliases": [...]}, ...]
+    ignore_words: common words left out of the comparison (see SUPPLIER_GENERIC_WORDS).
     Returns (id, official name) of the best match, or (None, None) if unsure.
     """
-    if not spoken or not _norm(spoken):
+    if not spoken:
         return None, None
-    n = _norm(spoken)
+    n = _core(spoken, ignore_words)
+    if not n:
+        return None, None
     scores: list[tuple[float, dict]] = []
     for item in items:
         best = 0.0
         for cand in [item["name"], *(item.get("aliases") or [])]:
-            c = _norm(cand)
+            c = _core(cand, ignore_words)
             if not c:
                 continue
             if n == c:
@@ -61,7 +79,7 @@ def match_id(spoken: Optional[str], items: list[dict]) -> tuple[Optional[int], O
 
 def match_supplier(spoken: Optional[str]) -> tuple[Optional[int], Optional[str]]:
     suppliers, _ = load_lists()
-    return match_id(spoken, suppliers)
+    return match_id(spoken, suppliers, SUPPLIER_GENERIC_WORDS)
 
 
 def match_product(spoken: Optional[str]) -> tuple[Optional[int], Optional[str]]:

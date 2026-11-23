@@ -22,6 +22,8 @@ CHECKS = [
     ("balaji", "s", "Balaji Traders"),
     ("Kumar", "s", "Kumar Provisions"),
     ("Ramesh Traders", "s", None),
+    ("Raju Traders", "s", None),
+    ("Sharma Traders", "s", "Sharma Distributors"),
     ("Maggi", "p", "Maggi Noodles 70g"),
     ("Maggi noodles", "p", "Maggi Noodles 70g"),
     ("magi", "p", "Maggi Noodles 70g"),

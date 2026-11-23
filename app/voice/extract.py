@@ -13,7 +13,7 @@ from typing import Optional, Union
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
-from app.matching import match_id
+from app.matching import SUPPLIER_GENERIC_WORDS, match_id
 from app.models import PREDEFINED_ISSUES, DeliveryDiscrepancy, SupplierPromise
 from app.voice.prompts import build_system_prompt, build_user_prompt
 
@@ -24,6 +24,7 @@ PROMISE = "SUPPLIER_PROMISE"
 class ExtractResult(BaseModel):
     record: Optional[Union[DeliveryDiscrepancy, SupplierPromise]] = None
     clarification_question: Optional[str] = None  # ask this before confirming
+    clarification_reason: Optional[str] = None  # a short code, for example SUPPLIER_NOT_IN_LIST
     error: Optional[str] = None  # set when no record could be made
     raw_json: Optional[dict] = None  # what the model returned, for debugging
 
@@ -156,9 +157,14 @@ def extract_record(
         return ExtractResult(error=f"Groq call failed: {e}")
 
     question = (data.pop("clarification_question", None) or None)
+    reason = (data.pop("clarification_reason", None) or None)
+    if question and not reason:
+        reason = "OTHER"
+    if not question:
+        reason = None
 
     # Supplier: match to the list, keep the spoken name if there is no match.
-    supplier_id, supplier_name = match_id(data.get("supplier_name"), suppliers)
+    supplier_id, supplier_name = match_id(data.get("supplier_name"), suppliers, SUPPLIER_GENERIC_WORDS)
     if supplier_id is not None:
         data["supplier_name"] = supplier_name
     data["supplier_id"] = supplier_id
@@ -186,6 +192,7 @@ def extract_record(
             # A line without a clear problem type cannot be saved. Ask instead.
             return ExtractResult(
                 clarification_question=question or "Is maal mein kya dikkat thi: kam, kharab, ya galat?",
+                clarification_reason=reason if question else "ISSUE_UNCLEAR",
                 raw_json=data,
             )
         data["lines"] = lines
@@ -199,6 +206,7 @@ def extract_record(
             # promise_type is required in the record shape, so ask instead of guessing.
             return ExtractResult(
                 clarification_question=question or "Supplier ne kya promise kiya tha?",
+                clarification_reason=reason if question else "PROMISE_UNCLEAR",
                 raw_json=data,
             )
         model = SupplierPromise
@@ -213,18 +221,25 @@ def extract_record(
     except ValidationError as e:
         return ExtractResult(error=f"Model reply did not fit the record shape: {e}", raw_json=data)
 
-    # One question at a time. Missing supplier and unknown supplier come first.
-    if not question:
-        if not record.supplier_name:
-            question = "Kaun sa supplier tha?"
-        elif record.supplier_id is None:
-            question = f"'{record.supplier_name}' supplier list mein nahi mila. Kaun sa supplier tha?"
-        elif record_type == DELIVERY and not record.lines:
-            question = "Delivery mein kya dikkat thi? Kaun sa maal, kitna?"
-        elif record_type == PROMISE and record.promise_type is None:
-            question = "Supplier ne kya promise kiya tha?"
+    # One question at a time. Order: an unclear number first, then a supplier problem,
+    # then any other question from the AI, then a delivery with no problem named.
+    supplier_question = supplier_reason = None
+    if not record.supplier_name:
+        supplier_question, supplier_reason = "Kaun sa supplier tha?", "SUPPLIER_MISSING"
+    elif record.supplier_id is None:
+        supplier_question = f"'{record.supplier_name}' supplier list mein nahi mila. Kaun sa supplier tha?"
+        supplier_reason = "SUPPLIER_NOT_IN_LIST"
 
-    return ExtractResult(record=record, clarification_question=question, raw_json=data)
+    if reason == "AMBIGUOUS_NUMBER" and question:
+        pass
+    elif supplier_question:
+        question, reason = supplier_question, supplier_reason
+    elif not question and record_type == DELIVERY and not record.lines:
+        question, reason = "Delivery mein kya dikkat thi? Kaun sa maal, kitna?", "ISSUE_UNCLEAR"
+
+    return ExtractResult(
+        record=record, clarification_question=question, clarification_reason=reason, raw_json=data
+    )
 
 
 def extract_delivery(transcript, suppliers, products, today=None) -> ExtractResult:
@@ -239,17 +254,38 @@ def extract_promise(transcript, suppliers, products, today=None) -> ExtractResul
 
 CLASSIFY_PROMPT = """You read one sentence a kirana (small grocery) shopkeeper said about a supplier.
 The words come from speech-to-text, so they can be Hindi, Hinglish or English.
-Decide what the sentence is about and reply with ONE JSON object only: {"kind": "delivery"} or {"kind": "promise"} or {"kind": "unclear"}.
-- delivery: a problem with goods that were delivered (fewer came, damaged, wrong item, wrong price, bill does not match).
+Decide what the sentence contains and reply with ONE JSON object only: {"kinds": [...]}.
+The list can have "delivery", "promise", or both (in the order they are said), or just "unclear".
+- delivery: a problem with goods that were delivered (fewer came, damaged, wrong item, wrong price, bad quality, bill does not match).
 - promise: the supplier promised something for later (discount, replacement, credit note, free goods, more days to pay, price lock).
-- unclear: anything else, or too vague to know (for example "same as last time", or no supplier, goods or promise at all).
-Do not guess. When in doubt, answer unclear."""
+- If the sentence has both a delivery problem AND a promise, return ["delivery", "promise"].
+- unclear: anything else, or too vague to know (for example "same as last time", or no supplier, goods or promise at all). Return ["unclear"].
+Do not guess. When in doubt, return ["unclear"].
 
+EXAMPLES (the names are only for the format)
+"Gupta ji ne 3 carton Parle-G kam bheje" -> {"kinds": ["delivery"]}
+"Kumar ne bola 500 rupaye ka credit note dega" -> {"kinds": ["promise"]}
+"Balaji ke 2 packet atta fate aaye aur woh bola agli baar badal dega" -> {"kinds": ["delivery", "promise"]}
+"Wahi same jaisa pichli baar" -> {"kinds": ["unclear"]}"""
 
-def classify_kind(transcript: str) -> str:
-    """Return "delivery", "promise" or "unclear". Raises an error if Groq fails."""
+# Words that show the supplier promised something. Safety net: if the AI missed a promise
+# in a sentence that also has a delivery problem, we still try to extract it.
+PROMISE_WORDS = re.compile(
+    r"\b(replace|badal\w*|wada|wade|vada|promise|dega|denge|dunga|free|discount|credit note|udhaar|udhar)\b",
+    re.IGNORECASE,
+)
+
+def classify_kinds(transcript: str) -> list[str]:
+    """Return a list like ["delivery"], ["promise"], ["delivery", "promise"] or ["unclear"].
+    Raises an error if Groq fails."""
     if not settings.GROQ_API_KEY:
         raise RuntimeError("GROQ_API_KEY is empty. Add it to your .env file.")
     data = _ask_groq(CLASSIFY_PROMPT, build_user_prompt(transcript))
-    kind = str(data.get("kind", "")).strip().lower()
-    return kind if kind in ("delivery", "promise") else "unclear"
+    kinds: list[str] = []
+    for k in data.get("kinds") or []:
+        k = str(k).strip().lower()
+        if k in ("delivery", "promise") and k not in kinds:
+            kinds.append(k)
+    if "delivery" in kinds and "promise" not in kinds and PROMISE_WORDS.search(transcript):
+        kinds.append("promise")
+    return kinds or ["unclear"]
