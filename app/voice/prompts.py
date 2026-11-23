@@ -20,6 +20,8 @@ HARD RULES
 8. Reply with ONE JSON object only. No text before or after it, no markdown.
 9. Use supplier and product names from the known lists when the speech clearly means one of them.
    Otherwise write the name exactly as spoken. Never write a list name that was not spoken about.
+10. Always write supplier_name and product_name in English letters (Roman script), even if the speech has Devanagari.
+    For example "शर्मा जी" means Sharma Distributors if that is in the list.
 """
 
 DELIVERY_SCHEMA = """Return exactly this JSON shape:
@@ -29,24 +31,62 @@ DELIVERY_SCHEMA = """Return exactly this JSON shape:
   "lines": [
     {
       "product_name": string or null,
-      "unit": string or null,            // carton, packet, kg, piece ...
+      "unit": string or null,            // carton, packet, kg, bag, piece ...
       "expected_qty": number or null,    // what was ordered or written on the bill
       "received_qty": number or null,    // what actually came
-      "damaged_qty": number or null,
+      "damaged_qty": number or null,     // only for packs that are physically damaged
       "shortage_qty": number or null,    // only if the shopkeeper said how much is missing
-      "issue": "MISSING_QTY" | "DAMAGED" | "WRONG_SKU" | "PRICE_MISMATCH" | "INVOICE_MISMATCH",
+      "issues": [                        // EVERY separate problem with this product, in the order said
+        {"type": string, "detail": string or null, "qty": number or null}
+      ],
       "amount_diff_rs": number or null,  // rupees too much or too little, only if said
-      "note": string or null
+      "note": string or null             // anything else worth keeping
     }
   ],
   "clarification_question": string or null
 }
 
 DELIVERY RULES
-- One line per product per problem. If one product is both short and damaged, write two lines.
-- MISSING_QTY: fewer came than expected. DAMAGED: goods broken or spoiled. WRONG_SKU: a different product or size came.
-  PRICE_MISMATCH: bill price is different from the agreed price. INVOICE_MISMATCH: bill and goods do not match in another way.
+- ONE line per product. Put the numbers for that product once, in that line.
+  Use separate lines only for different products.
+- "issues" lists EVERY problem the shopkeeper mentioned for that product: one entry per problem, none left out.
+  Example: "4 ordered, 2 came, and 1 of them has insects" is TWO problems (MISSING_QTY and QUALITY), so two entries.
+  If there is only one problem, the list has one entry. Never merge two problems into one entry.
+- For each entry: "type" is the category, "detail" is what the shopkeeper said about it in a few words
+  (Roman letters, for example "ghun lag gaya"), "qty" is how many were affected if said, otherwise null.
+- Use one of these known categories whenever it fits:
+    MISSING_QTY      fewer came than expected
+    DAMAGED          packs physically broken, torn, crushed or leaking
+    QUALITY          goods themselves are bad: insects or mites (keede, ghun), fungus, bad smell, wet, stale,
+                     expired or too close to expiry date
+    WRONG_SKU        a different product, brand or size came
+    PRICE_MISMATCH   bill price is different from the agreed price
+    INVOICE_MISMATCH bill and goods do not match in another way (for example wrong bill total)
+- If a problem fits NONE of these, make up a short new category yourself: 1 to 3 English words in CAPITAL
+  LETTERS joined by underscores (for example LATE_DELIVERY, WRONG_WEIGHT, MISSING_FREE_ITEM, EXPIRED_STOCK).
+  Name what the problem really is. Do not use a known category that does not truly fit. Use OTHER only if you cannot name it.
+- The product can be any item, even one that is not in the known list. Write the name as spoken.
 - If nothing about a delivery problem was said, "lines" is an empty list and you ask what the problem was.
+"""
+
+DELIVERY_EXAMPLE = """EXAMPLE 1 (the names and numbers are only for the format)
+Speech: "Sharma Distributors ne kal Maggi 5 carton bola tha, 4 hi aaye. Surf Excel ke 2 packet phate hue the."
+JSON: {"supplier_name": "Sharma Distributors", "event_date": "<yesterday>", "lines": [
+ {"product_name": "Maggi", "unit": "carton", "expected_qty": 5, "received_qty": 4, "damaged_qty": null, "shortage_qty": null,
+  "issues": [{"type": "MISSING_QTY", "detail": "4 hi aaye", "qty": null}], "amount_diff_rs": null, "note": null},
+ {"product_name": "Surf Excel", "unit": "packet", "expected_qty": null, "received_qty": null, "damaged_qty": 2, "shortage_qty": null,
+  "issues": [{"type": "DAMAGED", "detail": "phate hue", "qty": 2}], "amount_diff_rs": null, "note": null}],
+ "clarification_question": null}
+
+EXAMPLE 2: two problems with the same product, and a new category
+Speech: "Kumar ne Tata Salt 10 carton bola tha, 8 aaye, aur 3 carton ka dabba geela tha, delivery bhi 2 din late aayi."
+JSON: {"supplier_name": "Kumar", "event_date": null, "lines": [
+ {"product_name": "Tata Salt", "unit": "carton", "expected_qty": 10, "received_qty": 8, "damaged_qty": null, "shortage_qty": null,
+  "issues": [{"type": "MISSING_QTY", "detail": "8 aaye", "qty": null},
+             {"type": "QUALITY", "detail": "dabba geela tha", "qty": 3},
+             {"type": "LATE_DELIVERY", "detail": "2 din late", "qty": null}],
+  "amount_diff_rs": null, "note": null}],
+ "clarification_question": null}
 """
 
 PROMISE_SCHEMA = """Return exactly this JSON shape:
@@ -88,7 +128,11 @@ JSON: {"supplier_name": "Gupta", "event_date": null, "promise_type": "DISCOUNT",
 
 
 def _lists_block(suppliers: list[dict], products: list[dict]) -> str:
-    sup = ", ".join(s["name"] for s in suppliers) or "(none)"
+    sup_parts = []
+    for s in suppliers:
+        aliases = s.get("aliases") or []
+        sup_parts.append(s["name"] + (f" (also called: {', '.join(aliases)})" if aliases else ""))
+    sup = "; ".join(sup_parts) or "(none)"
     prod_parts = []
     for p in products:
         aliases = p.get("aliases") or []

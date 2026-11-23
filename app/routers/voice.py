@@ -1,12 +1,27 @@
-"""POST /api/transcribe: audio file in, {"text": "..."} out.
+"""Voice routes.
 
-Uses Groq's hosted Whisper. Needs GROQ_API_KEY in .env.
+POST /api/transcribe  audio file in, {"text": "..."} out (Groq Whisper)
+POST /api/extract     {"text": "..."} in, a DRAFT record out (see docs/api-contract.md)
 """
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from typing import Literal, Optional
+
+from fastapi import APIRouter, File, UploadFile
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from app.config import settings
+from app.matching import load_lists
+from app.voice.extract import DELIVERY, PROMISE, classify_kind, extract_record
 
 router = APIRouter()
+
+
+def _error(message: str, status_code: int = 400) -> JSONResponse:
+    """Errors always look like {"error": "short readable message"}."""
+    return JSONResponse(status_code=status_code, content={"error": message})
+
+
+# ======================= POST /api/transcribe =======================
 
 # whisper-large-v3 is the most accurate for Hindi. If it feels slow, try "whisper-large-v3-turbo".
 WHISPER_MODEL = "whisper-large-v3"
@@ -15,7 +30,7 @@ WHISPER_LANGUAGE = None
 # A short example in the style we want back: Roman letters, Hinglish, our shop words.
 STYLE_HINT = (
     "Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye. "
-    "Surf Excel, Tata Salt, Fortune oil, Aashirvaad atta, carton, packet, kg, Gupta Wholesale."
+    "Surf Excel, Tata Salt, Parle-G, Aashirvaad atta, carton, packet, kg, Gupta Wholesale."
 )
 MAX_BYTES = 24 * 1024 * 1024  # Groq's free tier accepts files up to 25 MB
 
@@ -48,13 +63,13 @@ def _file_name(upload: UploadFile) -> str:
 @router.post("/api/transcribe")
 def transcribe(audio: UploadFile = File(...)):
     if not settings.GROQ_API_KEY:
-        raise HTTPException(status_code=500, detail="GROQ_API_KEY is empty. Add it to your .env file.")
+        return _error("GROQ_API_KEY is empty. Add it to your .env file.", 500)
 
     data = audio.file.read()
     if not data:
-        raise HTTPException(status_code=400, detail="The audio file is empty.")
+        return _error("The audio file is empty.")
     if len(data) > MAX_BYTES:
-        raise HTTPException(status_code=413, detail="Audio is too big. Keep it under 24 MB.")
+        return _error("Audio is too big. Keep it under 24 MB.", 413)
 
     from groq import Groq  # imported here so the app still starts if groq is missing
 
@@ -71,6 +86,80 @@ def transcribe(audio: UploadFile = File(...)):
     try:
         result = Groq(api_key=settings.GROQ_API_KEY).audio.transcriptions.create(**options)
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Transcription failed: {e}")
+        return _error(f"Transcription failed: {e}", 502)
 
     return {"text": (result.text or "").strip()}
+
+
+# ======================= POST /api/extract =======================
+
+class ExtractRequest(BaseModel):
+    text: str
+    # Optional. If the screen already knows (Delivery Check or Promise Note button), send it.
+    # If left out, we work out the kind from the sentence.
+    kind: Optional[Literal["delivery", "promise"]] = None
+
+
+def _placeholder_readback(transcript: str) -> str:
+    # Task 3A-1 replaces this with the proper read-back sentence.
+    return f'Maine suna: "{transcript}". Sahi hai?'
+
+
+def _empty_record(record_type: Optional[str], transcript: str) -> dict:
+    """Same keys as a real record, but every value empty, for sentences we could not understand."""
+    return {
+        "record_type": record_type,
+        "supplier_id": None,
+        "supplier_name": None,
+        "event_date": None,
+        "status": None,
+        "lines": [],
+        "transcript": transcript,
+        "photos": [],
+        "confirmed": False,
+    }
+
+
+@router.post("/api/extract")
+def extract(body: ExtractRequest):
+    text = (body.text or "").strip()
+    if not text:
+        return _error("Text is empty. Please say it again.")
+
+    try:
+        suppliers, products = load_lists()
+    except Exception as e:
+        return _error(f"Could not read the supplier and product lists: {e}", 500)
+
+    try:
+        kind = body.kind or classify_kind(text)
+    except Exception as e:
+        return _error(f"Could not understand the sentence: {e}", 502)
+
+    if kind == "unclear":
+        return {
+            "kind": "unclear",
+            "record": _empty_record(None, text),
+            "readback_text": None,
+            "clarification": "Samajh nahi aaya. Delivery ki dikkat hai ya supplier ka wada? Dobara bolo.",
+        }
+
+    record_type = DELIVERY if kind == "delivery" else PROMISE
+    result = extract_record(record_type, text, suppliers, products)
+    if result.error:
+        return _error(result.error, 502)
+
+    if result.record is None:  # the model could not fill the required part, so we ask back
+        return {
+            "kind": kind,
+            "record": _empty_record(record_type, text),
+            "readback_text": None,
+            "clarification": result.clarification_question,
+        }
+
+    return {
+        "kind": kind,
+        "record": result.record.model_dump(mode="json"),
+        "readback_text": None if result.clarification_question else _placeholder_readback(text),
+        "clarification": result.clarification_question,
+    }

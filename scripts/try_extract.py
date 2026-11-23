@@ -40,9 +40,9 @@ def _delivery_ok(r):
     maggi = next((l for l in rec.lines if l.product_id == 1), None)
     surf = next((l for l in rec.lines if l.product_id == 2), None)
     return bool(
-        maggi and maggi.issue.value == "MISSING_QTY" and maggi.expected_qty == 5
+        maggi and maggi.issue == "MISSING_QTY" and maggi.expected_qty == 5
         and maggi.received_qty == 4 and maggi.shortage_qty == 1
-        and surf and surf.issue.value == "DAMAGED" and surf.damaged_qty == 2
+        and surf and surf.issue == "DAMAGED" and surf.damaged_qty == 2
         and rec.status.value == "DRAFT" and rec.confirmed is False
     )
 
@@ -54,6 +54,23 @@ def _promise_ok(r):
         and rec.product_id == 2 and rec.value == 5 and rec.value_type.value == "PERCENT"
         and rec.applies_to.value == "NEXT_ORDER" and rec.status.value == "DRAFT"
     )
+
+
+def _multi_issue_ok(r):
+    # One product, TWO problems: both must be listed in "issues".
+    rec = r.record
+    if rec is None or rec.supplier_id != 3 or len(rec.lines) != 1:
+        return False
+    line = rec.lines[0]
+    types = {i.type for i in line.issues}
+    return bool(line.product_id == 5 and {"MISSING_QTY", "QUALITY"} <= types
+                and line.expected_qty == 4 and line.received_qty == 2)
+
+
+def _custom_issue_ok(r):
+    # A problem that is not in our known list: the AI must name a new category (custom = True).
+    rec = r.record
+    return bool(rec and rec.lines and any(i.custom for i in rec.lines[0].issues))
 
 
 def _asks_supplier(r):
@@ -75,6 +92,10 @@ SAMPLES = [
      _asks_supplier, "no supplier said, so supplier is null and a question is asked"),
     (DELIVERY, "Ramesh Traders se tel ka ek carton kam aaya.",
      _unknown_supplier, "supplier not in list, so id is null and a question is asked"),
+    (DELIVERY, "Balaji ne Aashirvaad atta ke 4 bag bheje the lekin sirf 2 aaye, aur usme se 1 mai ghun lag gaya hai.",
+     _multi_issue_ok, "ONE Aashirvaad line with two issues: MISSING_QTY and QUALITY"),
+    (DELIVERY, "Kumar ki Tata Salt ki delivery do din late aayi.",
+     _custom_issue_ok, "a new category made by the AI (custom = true), for example LATE_DELIVERY"),
 ]
 
 

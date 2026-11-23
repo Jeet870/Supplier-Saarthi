@@ -30,9 +30,11 @@ class PromiseStatus(str, Enum):
 class DeliveryIssue(str, Enum):
     MISSING_QTY = "MISSING_QTY"
     DAMAGED = "DAMAGED"
+    QUALITY = "QUALITY"  # insects, fungus, bad smell, stale, expired
     WRONG_SKU = "WRONG_SKU"
     PRICE_MISMATCH = "PRICE_MISMATCH"
     INVOICE_MISMATCH = "INVOICE_MISMATCH"
+    OTHER = "OTHER"  # anything else; the shopkeeper's words go in "note"
 
 
 class PromiseType(str, Enum):
@@ -58,6 +60,20 @@ class AppliesTo(str, Enum):
     NONE = "NONE"
 
 
+# The categories we know in advance. The AI may also make up a new category for a problem
+# that fits none of these (see IssueItem.custom).
+PREDEFINED_ISSUES = tuple(i.value for i in DeliveryIssue)
+
+
+# ---------- One problem found with a product ----------
+
+class IssueItem(BaseModel):
+    type: str  # one of PREDEFINED_ISSUES, or a new UPPER_SNAKE_CASE category made by the AI
+    detail: Optional[str] = None  # the shopkeeper's own words, e.g. "ghun lag gaya"
+    qty: Optional[float] = None  # how many were affected, only if said
+    custom: bool = False  # True when the AI made up the category
+
+
 # ---------- One product line inside a delivery record ----------
 
 class DeliveryLine(BaseModel):
@@ -68,7 +84,8 @@ class DeliveryLine(BaseModel):
     received_qty: Optional[float] = None  # what actually came
     damaged_qty: Optional[float] = None
     shortage_qty: Optional[float] = None  # how much is missing
-    issue: DeliveryIssue
+    issue: str  # the MAIN problem (first in issues). Kept so older code that reads "issue" still works
+    issues: list[IssueItem] = Field(default_factory=list)  # EVERY problem for this product
     amount_diff_rs: Optional[float] = None  # rupees too much or too little
     note: Optional[str] = None
 

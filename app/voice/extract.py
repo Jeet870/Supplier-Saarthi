@@ -8,13 +8,13 @@ Nothing here saves to the database. The confirmation ("Haan") is a later step.
 import json
 import re
 from datetime import date
-from difflib import SequenceMatcher
 from typing import Optional, Union
 
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
-from app.models import DeliveryDiscrepancy, SupplierPromise
+from app.matching import match_id
+from app.models import PREDEFINED_ISSUES, DeliveryDiscrepancy, SupplierPromise
 from app.voice.prompts import build_system_prompt, build_user_prompt
 
 DELIVERY = "DELIVERY_DISCREPANCY"
@@ -26,40 +26,6 @@ class ExtractResult(BaseModel):
     clarification_question: Optional[str] = None  # ask this before confirming
     error: Optional[str] = None  # set when no record could be made
     raw_json: Optional[dict] = None  # what the model returned, for debugging
-
-
-# ---------- Name matching (supplier list / product list) ----------
-
-def _norm(text: str) -> str:
-    return " ".join(re.sub(r"[^a-z0-9]+", " ", text.lower()).split())
-
-
-def _match_id(spoken: Optional[str], items: list[dict]) -> tuple[Optional[int], Optional[str]]:
-    """Return (id, canonical name) of the best match, or (None, None) if unsure."""
-    if not spoken or not _norm(spoken):
-        return None, None
-    n = _norm(spoken)
-    scores: list[tuple[float, dict]] = []
-    for item in items:
-        best = 0.0
-        for cand in [item["name"], *(item.get("aliases") or [])]:
-            c = _norm(cand)
-            if not c:
-                continue
-            if n == c:
-                best = 1.0
-                break
-            score = SequenceMatcher(None, n, c).ratio()
-            if min(len(n), len(c)) >= 4 and (n in c or c in n):
-                score = max(score, 0.85)
-            best = max(best, score)
-        scores.append((best, item))
-    scores.sort(key=lambda s: s[0], reverse=True)
-    if not scores or scores[0][0] < 0.75:
-        return None, None
-    if len(scores) > 1 and scores[1][0] >= scores[0][0] - 0.05 and scores[0][0] < 1.0:
-        return None, None  # two equally good matches: do not guess
-    return scores[0][1]["id"], scores[0][1]["name"]
 
 
 # ---------- Groq call ----------
@@ -96,6 +62,73 @@ def _ask_groq(system_prompt: str, user_prompt: str) -> dict:
     raise ValueError(f"model did not return valid JSON: {last_error}")
 
 
+def _issue_list(line: dict) -> list:
+    """All problems of one line as a list of dicts (also reads the old single "issue" field)."""
+    raw = line.get("issues") or []
+    if not raw and line.get("issue"):
+        raw = [{"type": line["issue"]}]
+    return [{"type": r} if isinstance(r, str) else dict(r) for r in raw if r]
+
+
+def clean_issue_type(text) -> Optional[str]:
+    """CAPITAL_LETTERS_WITH_UNDERSCORES, at most 32 characters. None if nothing is left."""
+    cleaned = re.sub(r"[^A-Z0-9]+", "_", str(text or "").upper()).strip("_")
+    return cleaned[:32].strip("_") or None
+
+
+def merge_same_product(lines: list[dict]) -> list[dict]:
+    """The record shape has ONE line per product. If the model gave two lines for the same
+    product, join them into one line and lose nothing (numbers, problems and notes are kept)."""
+    merged: list[dict] = []
+    seen: dict = {}
+    for line in lines:
+        key = line.get("product_id")
+        if key is None and line.get("product_name"):
+            key = ("name", " ".join(str(line["product_name"]).lower().split()))
+        if key is None or key not in seen:
+            merged.append(line)
+            if key is not None:
+                seen[key] = line
+            continue
+        base = seen[key]
+        for field in ("unit", "expected_qty", "received_qty", "damaged_qty", "shortage_qty", "amount_diff_rs"):
+            if base.get(field) is None and line.get(field) is not None:
+                base[field] = line[field]
+        base["issues"] = _issue_list(base) + _issue_list(line)
+        base.pop("issue", None)
+        if line.get("note"):
+            base["note"] = "; ".join(x for x in [base.get("note"), line["note"]] if x)
+    return merged
+
+
+def normalize_issues(line: dict) -> None:
+    """Clean the problem list of one line: tidy names, join repeats, flag AI-made categories,
+    fill quantities that are already known, and set the main issue (the first one)."""
+    items: list[dict] = []
+    for raw in _issue_list(line):
+        issue_type = clean_issue_type(raw.get("type"))
+        if not issue_type:
+            continue
+        existing = next((i for i in items if i["type"] == issue_type), None)
+        if existing:  # same category twice: keep one, join the details
+            if raw.get("detail") and raw["detail"] != existing.get("detail"):
+                existing["detail"] = "; ".join(x for x in [existing.get("detail"), raw["detail"]] if x)
+            continue
+        qty = raw.get("qty")
+        if qty is None and issue_type == "MISSING_QTY":
+            qty = line.get("shortage_qty")
+        if qty is None and issue_type == "DAMAGED":
+            qty = line.get("damaged_qty")
+        items.append({
+            "type": issue_type,
+            "detail": raw.get("detail") or None,
+            "qty": qty,
+            "custom": issue_type not in PREDEFINED_ISSUES,
+        })
+    line["issues"] = items
+    line["issue"] = items[0]["type"] if items else None
+
+
 # ---------- Main function ----------
 
 def extract_record(
@@ -125,7 +158,7 @@ def extract_record(
     question = (data.pop("clarification_question", None) or None)
 
     # Supplier: match to the list, keep the spoken name if there is no match.
-    supplier_id, supplier_name = _match_id(data.get("supplier_name"), suppliers)
+    supplier_id, supplier_name = match_id(data.get("supplier_name"), suppliers)
     if supplier_id is not None:
         data["supplier_name"] = supplier_name
     data["supplier_id"] = supplier_id
@@ -133,20 +166,22 @@ def extract_record(
     if record_type == DELIVERY:
         lines = data.get("lines") or []
         for line in lines:
-            pid, pname = _match_id(line.get("product_name"), products)
+            pid, pname = match_id(line.get("product_name"), products)
             line["product_id"] = pid
             if pid is not None:
                 line["product_name"] = pname
+        lines = merge_same_product(lines)
+        for line in lines:
             # Simple arithmetic only: ordered minus received, when both were said.
             if (
-                line.get("issue") == "MISSING_QTY"
-                and line.get("shortage_qty") is None
+                line.get("shortage_qty") is None
                 and line.get("expected_qty") is not None
                 and line.get("received_qty") is not None
+                and line["expected_qty"] > line["received_qty"]
             ):
-                diff = line["expected_qty"] - line["received_qty"]
-                if diff > 0:
-                    line["shortage_qty"] = diff
+                line["shortage_qty"] = line["expected_qty"] - line["received_qty"]
+        for line in lines:
+            normalize_issues(line)
         if any(not line.get("issue") for line in lines):
             # A line without a clear problem type cannot be saved. Ask instead.
             return ExtractResult(
@@ -156,7 +191,7 @@ def extract_record(
         data["lines"] = lines
         model = DeliveryDiscrepancy
     else:
-        pid, pname = _match_id(data.get("product_name"), products)
+        pid, pname = match_id(data.get("product_name"), products)
         data["product_id"] = pid
         if pid is not None:
             data["product_name"] = pname
@@ -198,3 +233,23 @@ def extract_delivery(transcript, suppliers, products, today=None) -> ExtractResu
 
 def extract_promise(transcript, suppliers, products, today=None) -> ExtractResult:
     return extract_record(PROMISE, transcript, suppliers, products, today)
+
+
+# ---------- What is this sentence about? ----------
+
+CLASSIFY_PROMPT = """You read one sentence a kirana (small grocery) shopkeeper said about a supplier.
+The words come from speech-to-text, so they can be Hindi, Hinglish or English.
+Decide what the sentence is about and reply with ONE JSON object only: {"kind": "delivery"} or {"kind": "promise"} or {"kind": "unclear"}.
+- delivery: a problem with goods that were delivered (fewer came, damaged, wrong item, wrong price, bill does not match).
+- promise: the supplier promised something for later (discount, replacement, credit note, free goods, more days to pay, price lock).
+- unclear: anything else, or too vague to know (for example "same as last time", or no supplier, goods or promise at all).
+Do not guess. When in doubt, answer unclear."""
+
+
+def classify_kind(transcript: str) -> str:
+    """Return "delivery", "promise" or "unclear". Raises an error if Groq fails."""
+    if not settings.GROQ_API_KEY:
+        raise RuntimeError("GROQ_API_KEY is empty. Add it to your .env file.")
+    data = _ask_groq(CLASSIFY_PROMPT, build_user_prompt(transcript))
+    kind = str(data.get("kind", "")).strip().lower()
+    return kind if kind in ("delivery", "promise") else "unclear"
