@@ -24,8 +24,12 @@ lines           list       one item per product, each with:
   received_qty    number or null  what actually came
   damaged_qty     number or null
   shortage_qty    number or null  how much is missing
-  issue           text            MISSING_QTY, DAMAGED, WRONG_SKU,
-                                  PRICE_MISMATCH, INVOICE_MISMATCH
+  issue           text            main problem (first in issues)
+  issues          list            all problems found for this line, each with:
+    type            text          one of predefined issues or custom category
+    detail          text or null  shopkeeper's own words
+    qty             number or null affected quantity
+    custom          true/false    true when category was AI-generated
   amount_diff_rs  number or null  rupees too much or too little
   note            text or null
 
