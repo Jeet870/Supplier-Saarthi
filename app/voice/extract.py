@@ -7,6 +7,7 @@ Nothing here saves to the database. The confirmation ("Haan") is a later step.
 """
 import json
 import re
+import time
 from datetime import date
 from typing import Optional, Union
 
@@ -41,26 +42,36 @@ def _parse_json(text: str) -> dict:
 
 
 def _ask_groq(system_prompt: str, user_prompt: str) -> dict:
-    from groq import Groq  # imported here so the app still starts if groq is missing
+    from groq import Groq, RateLimitError, APIStatusError  # imported here so the app still starts if groq is missing
 
     client = Groq(api_key=settings.GROQ_API_KEY)
     last_error: Exception = ValueError("no attempt made")
-    for _ in range(2):  # one retry if the reply is not clean JSON
-        resp = client.chat.completions.create(
-            model=settings.GROQ_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0,
-            max_completion_tokens=4096,
-            response_format={"type": "json_object"},
-        )
+    for attempt in range(4):
         try:
+            resp = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                temperature=0,
+                max_completion_tokens=4096,
+                response_format={"type": "json_object"},
+            )
             return _parse_json(resp.choices[0].message.content)
+        except (RateLimitError, APIStatusError) as e:
+            status_code = getattr(e, "status_code", None)
+            if status_code == 429 or isinstance(e, RateLimitError):
+                if attempt < 3:
+                    time.sleep(2.0 * (attempt + 1))
+                    continue
+                raise ValueError("Thoda ruko, dobara bolo (rate limit). Ek minute baad try karein.")
+            raise
         except (ValueError, json.JSONDecodeError) as e:
             last_error = e
+            time.sleep(0.5)
     raise ValueError(f"model did not return valid JSON: {last_error}")
+
 
 
 def _issue_list(line: dict) -> list:

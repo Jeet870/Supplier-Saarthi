@@ -1,6 +1,6 @@
 # Accuracy Evaluation Results (Supplier Saarthi)
 
-**Evaluated Date:** 2026-11-23 18:54  
+**Evaluated Date:** 2026-11-23 23:11  
 **Dataset:** 30 Sentences (`tests/utterances.json`)
 
 ## Measured Metrics

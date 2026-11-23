@@ -58,13 +58,15 @@ DELIVERY RULES
 - For each entry: "type" is the category, "detail" is what the shopkeeper said about it in a few words
   (Roman letters, for example "ghun lag gaya"), "qty" is how many were affected if said, otherwise null.
 - Use one of these known categories whenever it fits:
-    MISSING_QTY      fewer came than expected
+    MISSING_QTY      fewer came than expected (e.g. "3 carton kam bheje" -> shortage_qty: 3, issue: MISSING_QTY)
     DAMAGED          packs physically broken, torn, crushed or leaking
     QUALITY          goods themselves are bad: insects or mites (keede, ghun), fungus, bad smell, wet, stale,
                      expired or too close to expiry date
     WRONG_SKU        a different product, brand or size came
-    PRICE_MISMATCH   bill price is different from the agreed price
+    PRICE_MISMATCH   bill price is different from the agreed price (e.g. "rate 260 tha, 275 laga diya" -> amount_diff_rs: 15, issue: PRICE_MISMATCH)
     INVOICE_MISMATCH bill and goods do not match in another way (for example wrong bill total)
+- When a speaker says "N kam bheje" / "N kam aaye", always populate shortage_qty with N and issue with MISSING_QTY.
+- When a speaker mentions old rate vs new rate, calculate the rupee difference in amount_diff_rs and set issue to PRICE_MISMATCH.
 - If a problem fits NONE of these, make up a short new category yourself: 1 to 3 English words in CAPITAL
   LETTERS joined by underscores (for example LATE_DELIVERY, WRONG_WEIGHT, MISSING_FREE_ITEM, EXPIRED_STOCK).
   Name what the problem really is. Do not use a known category that does not truly fit. Use OTHER only if you cannot name it.

@@ -226,3 +226,34 @@ def test_readback_generator_promise():
     assert "Gupta Wholesale" in text
     assert "Tata Salt" in text
     assert "5% discount" in text
+
+
+def test_query_empty_text():
+    """Verify Day 4 POST /api/query returns friendly prompt when text is empty."""
+    response = client.post("/api/query", json={"text": ""})
+    assert response.status_code == 200
+    data = response.json()
+    assert "dobara bolo" in data.get("answer_text", "")
+    assert data.get("records") == []
+
+
+def test_query_mocked_pending():
+    """Verify Day 4 POST /api/query with mocked pending records."""
+    fake_suppliers = [{"id": 1, "name": "Sharma Distributors", "aliases": ["sharma"]}]
+    fake_products = [{"id": 1, "name": "Maggi Noodles 70g", "aliases": ["maggi"]}]
+    fake_records = [
+        {
+            "id": 101,
+            "record_type": "DELIVERY_DISCREPANCY",
+            "supplier_name": "Sharma Distributors",
+            "lines": [{"product_name": "Maggi Noodles 70g", "shortage_qty": 2, "unit": "carton", "issue": "MISSING_QTY"}],
+        }
+    ]
+    with patch("app.matching.load_lists", return_value=(fake_suppliers, fake_products)), \
+         patch("app.db.get_pending_records", return_value=fake_records):
+        response = client.post("/api/query", json={"text": "Sharma ka kya pending hai?"})
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data.get("records", [])) == 1
+        assert "Sharma" in data.get("answer_text", "")
+

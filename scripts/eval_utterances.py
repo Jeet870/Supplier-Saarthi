@@ -11,6 +11,7 @@ Usage:
 import json
 import os
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -58,6 +59,7 @@ def evaluate():
             continue
 
         resp = client.post("/api/extract", json={"text": text})
+        time.sleep(1.0)
         if resp.status_code != 200:
             failures.append({
                 "id": item_id,
@@ -184,8 +186,11 @@ def evaluate():
 
     if failures:
         print(f"\nDiscrepancies / Top Failing Items ({len(failures)} total):")
-        for f_item in failures[:5]:
-            print(f" - [ID {f_item['id']}] \"{f_item['text']}\" -> {f_item.get('field', 'error')}: expected {f_item.get('expected')}, got {f_item.get('got')}")
+        for f_item in failures[:10]:
+            if "reason" in f_item:
+                print(f" - [ID {f_item['id']}] \"{f_item['text']}\" -> {f_item['reason']}")
+            else:
+                print(f" - [ID {f_item['id']}] \"{f_item['text']}\" -> {f_item.get('field', 'error')}: expected {f_item.get('expected')}, got {f_item.get('got')}")
     else:
         print("\nAll evaluated sentences matched perfectly!")
 

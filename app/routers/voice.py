@@ -183,3 +183,111 @@ def extract(body: ExtractRequest):
         # the rest are listed here in the same shape. Each is confirmed on its own.
         response["additional"] = items[1:]
     return response
+
+
+# ======================= POST /api/query =======================
+
+class QueryRequest(BaseModel):
+    text: str
+
+
+@router.post("/api/query")
+def answer_query(body: QueryRequest):
+    """Answer voice questions from shopkeepers about pending deliveries and promises (Task 4A-1)."""
+    text = (body.text or "").strip()
+    if not text:
+        return {"answer_text": "Aapka sawal samajh nahi aaya, dobara bolo.", "records": []}
+
+    try:
+        from app.matching import load_lists, match_id
+        from app import db
+        suppliers, products = load_lists()
+    except Exception as e:
+        return _error(f"Could not load master data: {e}", 500)
+
+    # 1. Match supplier if spoken
+    matched_supplier_id = None
+    matched_supplier_name = None
+    for word in text.split():
+        s_id, s_name = match_id(word, suppliers)
+        if s_id:
+            matched_supplier_id = s_id
+            matched_supplier_name = s_name
+            break
+    if not matched_supplier_id:
+        s_id, s_name = match_id(text, suppliers)
+        if s_id:
+            matched_supplier_id = s_id
+            matched_supplier_name = s_name
+
+    # 2. Check query intent: promises, damages, or general pending
+    lower_text = text.lower()
+    is_promise_query = any(k in lower_text for k in ["promise", "wada", "vaada", "udhaar", "discount", "free"])
+    is_damage_query = any(k in lower_text for k in ["damage", "fata", "kharab", "phata", "toota"])
+
+    record_type = "SUPPLIER_PROMISE" if is_promise_query and not is_damage_query else None
+
+    try:
+        records = db.get_pending_records(supplier_id=matched_supplier_id, record_type=record_type)
+    except Exception as e:
+        return _error(f"Could not query pending records: {e}", 500)
+
+    if is_damage_query:
+        records = [
+            r for r in records
+            if any((l.get("issue") == "DAMAGED" or (l.get("damaged_qty") or 0) > 0) for l in (r.get("lines") or []))
+        ]
+
+    # 3. Generate answer_text using Groq LLM with friendly fallback
+    answer_text = ""
+    if not records:
+        if matched_supplier_name:
+            answer_text = f"{matched_supplier_name} ka abhi koi pending maal ya wada nahi hai."
+        else:
+            answer_text = "Abhi koi bhi pending maal ya wada nahi hai. Sab hisaab clear hai."
+    else:
+        records_summary = []
+        for r in records[:5]:
+            if r.get("record_type") == "DELIVERY_DISCREPANCY":
+                items = [f"{l.get('product_name')} ({l.get('shortage_qty') or l.get('damaged_qty') or ''} {l.get('unit') or ''} {l.get('issue')})" for l in (r.get("lines") or [])]
+                records_summary.append(f"{r.get('supplier_name')}: {', '.join(items)}")
+            else:
+                records_summary.append(f"{r.get('supplier_name')} promise: {r.get('promise_type')} ({r.get('value') or ''} {r.get('value_type') or ''})")
+
+        prompt_user = f"Shopkeeper asked: \"{text}\"\nMatching open records:\n" + "\n".join(f"- {s}" for s in records_summary)
+        prompt_sys = (
+            "You are Supplier Saarthi voice assistant for Indian kirana shopkeepers. "
+            "Answer the question in ONE concise, natural Hindi/Hinglish sentence. "
+            "Be direct, polite, state what is pending clearly (naming product/supplier and count). "
+            "Do not output markdown, formatting, or quotes."
+        )
+        try:
+            from groq import Groq
+            client = Groq(api_key=settings.GROQ_API_KEY)
+            resp = client.chat.completions.create(
+                model=settings.GROQ_MODEL,
+                messages=[
+                    {"role": "system", "content": prompt_sys},
+                    {"role": "user", "content": prompt_user},
+                ],
+                temperature=0.2,
+                max_tokens=1024,
+            )
+            raw_content = (resp.choices[0].message.content or "").strip().strip('"')
+            if raw_content:
+                answer_text = raw_content
+            else:
+                if matched_supplier_name:
+                    answer_text = f"{matched_supplier_name} ke {len(records)} items pending hain."
+                else:
+                    answer_text = f"Total {len(records)} pending items hain."
+        except Exception:
+            if matched_supplier_name:
+                answer_text = f"{matched_supplier_name} ke {len(records)} items pending hain."
+            else:
+                answer_text = f"Total {len(records)} pending items hain."
+
+    return {
+        "answer_text": answer_text,
+        "records": records,
+    }
