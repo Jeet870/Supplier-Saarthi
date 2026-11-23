@@ -122,3 +122,17 @@ async def upload_photo(file: UploadFile = File(...)):
             detail={"error": f"Failed to upload photo: {str(e)}"},
         )
 
+
+@router.post("/api/demo/reset")
+def demo_reset():
+    """Reset database records to the 7 canonical demo story rows (Task 4B-2)."""
+    try:
+        count = db.reset_demo_data()
+        return {"ok": True, "count": count}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={"error": f"Failed to reset demo data: {str(e)}"},
+        )
+
+

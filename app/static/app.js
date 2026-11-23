@@ -1175,6 +1175,35 @@
     initDeliveryPage();
     initPromisePage();
     initConfirmationStandalonePage();
+
+    // Hidden Demo Reset: Tap logo 5 times in 3 seconds (Task 4B-2 / 4C-4)
+    let logoTapCount = 0;
+    let logoTapTimer = null;
+    const brandLogo = document.querySelector('.brand-group');
+    if (brandLogo) {
+      brandLogo.addEventListener('click', function (e) {
+        logoTapCount++;
+        if (logoTapCount === 1) {
+          logoTapTimer = setTimeout(() => {
+            logoTapCount = 0;
+          }, 3000);
+        }
+        if (logoTapCount >= 5) {
+          e.preventDefault();
+          clearTimeout(logoTapTimer);
+          logoTapCount = 0;
+          if (confirm('Reset demo data to initial story?')) {
+            fetch('/api/demo/reset', { method: 'POST' })
+              .then((r) => r.json())
+              .then((d) => {
+                alert('Demo data reset successfully! (' + (d.count || 7) + ' records)');
+                window.location.href = '/';
+              })
+              .catch((err) => alert('Failed to reset: ' + err));
+          }
+        }
+      });
+    }
   });
 
   // Export functions for testing & global access

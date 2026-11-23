@@ -176,3 +176,196 @@ def upload_photo(file_bytes: bytes, filename: str, content_type: str = "image/jp
     )
     return client.storage.from_("evidence").get_public_url(unique_path)
 
+
+def reset_demo_data() -> int:
+    """Reset database records to the 7 canonical demo story rows (Task 4B-2)."""
+    client = get_supabase_client()
+
+    # Fetch suppliers and products map
+    sup_rows = client.table("suppliers").select("id, name").execute().data or []
+    sup_map = {s["name"]: s["id"] for s in sup_rows}
+
+    prod_rows = client.table("products").select("id, name").execute().data or []
+    prod_map = {p["name"]: p["id"] for p in prod_rows}
+
+    # Clear all records
+    client.table("records").delete().neq("id", 0).execute()
+
+    demo_records = [
+        # D1. Sharma: Surf Excel short by 1 carton (open)
+        {
+            "record_type": "DELIVERY_DISCREPANCY",
+            "supplier_id": sup_map.get("Sharma Distributors", 1),
+            "supplier_name": "Sharma Distributors",
+            "event_date": "2026-11-12",
+            "status": "OPEN",
+            "transcript": "Sharma Distributors ka Surf Excel 6 mein se 5 carton aaye",
+            "summary_text": "Sharma Distributors: Surf Excel 6 carton mangaya, 5 aaye. 1 carton kam.",
+            "confirmed": True,
+            "created_at": "2026-11-12T10:30:00+05:30",
+            "photos": [],
+            "lines": [
+                {
+                    "product_id": prod_map.get("Surf Excel Easy Wash 1kg", 2),
+                    "product_name": "Surf Excel Easy Wash 1kg",
+                    "unit": "carton",
+                    "expected_qty": 6,
+                    "received_qty": 5,
+                    "damaged_qty": None,
+                    "shortage_qty": 1,
+                    "issue": "MISSING_QTY",
+                    "amount_diff_rs": None,
+                    "note": None,
+                }
+            ],
+        },
+        # D2. Sharma: promised 15 days credit (open)
+        {
+            "record_type": "SUPPLIER_PROMISE",
+            "supplier_id": sup_map.get("Sharma Distributors", 1),
+            "supplier_name": "Sharma Distributors",
+            "event_date": "2026-11-14",
+            "status": "OPEN",
+            "transcript": "Sharma ne 15 din ka udhaar dene ko bola hai",
+            "summary_text": "Sharma Distributors ne 15 din ka udhaar dene ka wada kiya.",
+            "confirmed": True,
+            "created_at": "2026-11-14T11:00:00+05:30",
+            "photos": [],
+            "promise_type": "CREDIT_PERIOD",
+            "product_id": None,
+            "product_name": None,
+            "value": 15,
+            "value_type": "DAYS",
+            "unit": None,
+            "applies_to": "NONE",
+            "follow_up_date": None,
+        },
+        # D3. Gupta: wrong item sent, Tata Salt (disputed)
+        {
+            "record_type": "DELIVERY_DISCREPANCY",
+            "supplier_id": sup_map.get("Gupta Wholesale", 2),
+            "supplier_name": "Gupta Wholesale",
+            "event_date": "2026-11-15",
+            "status": "DISPUTED",
+            "transcript": "Gupta ji ne Tata Salt ki jagah dusra namak bhej diya",
+            "summary_text": "Gupta Wholesale: Tata Salt ki jagah dusra namak aaya.",
+            "confirmed": True,
+            "created_at": "2026-11-15T09:45:00+05:30",
+            "photos": [],
+            "lines": [
+                {
+                    "product_id": prod_map.get("Tata Salt 1kg", 3),
+                    "product_name": "Tata Salt 1kg",
+                    "unit": None,
+                    "expected_qty": None,
+                    "received_qty": None,
+                    "damaged_qty": None,
+                    "shortage_qty": None,
+                    "issue": "WRONG_SKU",
+                    "amount_diff_rs": None,
+                    "note": None,
+                }
+            ],
+        },
+        # D4. Gupta: promised to replace the Tata Salt tomorrow (open, follow-up 20 Nov)
+        {
+            "record_type": "SUPPLIER_PROMISE",
+            "supplier_id": sup_map.get("Gupta Wholesale", 2),
+            "supplier_name": "Gupta Wholesale",
+            "event_date": "2026-11-15",
+            "status": "OPEN",
+            "transcript": "Gupta ji ne kaha jo Tata Salt kam aaya woh kal bhej denge",
+            "summary_text": "Gupta Wholesale ne Tata Salt badalne ka wada kiya (20 Nov tak).",
+            "confirmed": True,
+            "created_at": "2026-11-15T09:50:00+05:30",
+            "photos": [],
+            "promise_type": "REPLACEMENT",
+            "product_id": prod_map.get("Tata Salt 1kg", 3),
+            "product_name": "Tata Salt 1kg",
+            "value": None,
+            "value_type": None,
+            "unit": None,
+            "applies_to": "DATE",
+            "follow_up_date": "2026-11-20",
+        },
+        # D5. Balaji: Parle-G rate Rs 5 too high (resolved)
+        {
+            "record_type": "DELIVERY_DISCREPANCY",
+            "supplier_id": sup_map.get("Balaji Traders", 3),
+            "supplier_name": "Balaji Traders",
+            "event_date": "2026-11-10",
+            "status": "RESOLVED",
+            "transcript": "Balaji ke bill mein Parle-G ka rate 5 rupaye zyada laga hai",
+            "summary_text": "Balaji Traders: Parle-G ka rate bill mein Rs 5 zyada tha.",
+            "confirmed": True,
+            "created_at": "2026-11-10T12:15:00+05:30",
+            "photos": [],
+            "lines": [
+                {
+                    "product_id": prod_map.get("Parle-G Biscuit", 4),
+                    "product_name": "Parle-G Biscuit",
+                    "unit": None,
+                    "expected_qty": None,
+                    "received_qty": None,
+                    "damaged_qty": None,
+                    "shortage_qty": None,
+                    "issue": "PRICE_MISMATCH",
+                    "amount_diff_rs": 5,
+                    "note": None,
+                }
+            ],
+        },
+        # D6. Kumar: promised a Rs 500 credit note (open)
+        {
+            "record_type": "SUPPLIER_PROMISE",
+            "supplier_id": sup_map.get("Kumar Provisions", 4),
+            "supplier_name": "Kumar Provisions",
+            "event_date": "2026-11-13",
+            "status": "OPEN",
+            "transcript": "Kumar Provisions ne 500 rupaye ka credit note dene ka bola hai",
+            "summary_text": "Kumar Provisions ne Rs 500 ka credit note dene ka wada kiya.",
+            "confirmed": True,
+            "created_at": "2026-11-13T16:20:00+05:30",
+            "photos": [],
+            "promise_type": "CREDIT_NOTE",
+            "product_id": None,
+            "product_name": None,
+            "value": 500,
+            "value_type": "AMOUNT_RS",
+            "unit": None,
+            "applies_to": "NONE",
+            "follow_up_date": None,
+        },
+        # D7. Balaji: 3 cartons of Parle-G damaged (open)
+        {
+            "record_type": "DELIVERY_DISCREPANCY",
+            "supplier_id": sup_map.get("Balaji Traders", 3),
+            "supplier_name": "Balaji Traders",
+            "event_date": "2026-11-18",
+            "status": "OPEN",
+            "transcript": "Balaji ke Parle-G ke 3 carton damage the",
+            "summary_text": "Balaji Traders: Parle-G ke 3 carton damage aaye.",
+            "confirmed": True,
+            "created_at": "2026-11-18T10:05:00+05:30",
+            "photos": [],
+            "lines": [
+                {
+                    "product_id": prod_map.get("Parle-G Biscuit", 4),
+                    "product_name": "Parle-G Biscuit",
+                    "unit": "carton",
+                    "expected_qty": None,
+                    "received_qty": None,
+                    "damaged_qty": 3,
+                    "shortage_qty": None,
+                    "issue": "DAMAGED",
+                    "amount_diff_rs": None,
+                    "note": None,
+                }
+            ],
+        },
+    ]
+
+    insert_resp = client.table("records").insert(demo_records).execute()
+    return len(insert_resp.data or [])
+
+
