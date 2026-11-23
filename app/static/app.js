@@ -903,23 +903,26 @@
       console.warn('Backend save failed, saving as local offline draft:', err);
       saveOfflineDraft(recordPayload);
 
-      if (btnHaan) {
-        btnHaan.disabled = false;
-        btnHaan.innerText = '🔄 Retry Server Save';
-      }
-      if (btnGalat) btnGalat.disabled = false;
-
-      if (statusMsg) {
-        statusMsg.innerHTML = `
-          <div class="box-card" style="border-left: 4px solid var(--warning); background: var(--warning-light); margin-top: 10px; padding: 12px;">
-            <div style="font-weight: 700; color: #b45309; margin-bottom: 4px;">
-              ⚠️ Server Save Failed: ${escapeHtml(err.message)}
-            </div>
-            <div style="font-size: 12px; color: #78350f;">
-              Aapka record <strong>Phone mein Offline Draft</strong> ke roop mein save kar liya gaya hai. Internet wapas aane par Retry karein.
-            </div>
+      // Task 4C-5: Show "Saved offline" card
+      card.innerHTML = `
+        <div style="border-left: 5px solid #eab308; background: #fefce8; padding: 20px; border-radius: 12px; text-align: center;">
+          <div style="font-size: 36px; margin-bottom: 6px;">📱</div>
+          <div style="font-size: 18px; font-weight: 800; color: #854d0e; margin-bottom: 4px;">
+            Saved offline
           </div>
-        `;
+          <div style="font-size: 13px; color: #713f12; margin-bottom: 14px;">
+            Aapka record phone mein surakshit hai. Internet aate hi apne aap Supabase server par sync ho jayega.
+          </div>
+          <div style="display: flex; gap: 8px; justify-content: center;">
+            <a href="/pending" class="btn-haan" style="text-decoration: none; padding: 10px 16px; font-size: 13px; background: #ca8a04;">
+              ⏳ Baqaya Records Dekhein
+            </a>
+          </div>
+        </div>
+      `;
+
+      if (cardIdx === 0 && State.additionalRecords.length === 0) {
+        clearCurrentDraft();
       }
     }
   }
@@ -1127,15 +1130,67 @@
     const headerStatus = document.querySelector('.header-status');
     if (!headerStatus) return;
 
+    const drafts = JSON.parse(
+      localStorage.getItem(STORAGE_KEY_OFFLINE) || localStorage.getItem('munshi_offline_drafts') || '[]'
+    );
+    const hasDrafts = drafts.length > 0;
+
     if (!navigator.onLine) {
       headerStatus.innerHTML =
-        '<span class="status-dot" style="background:#f59e0b;"></span><span>Offline</span>';
+        `<span class="status-dot" style="background:#f59e0b;"></span><span>Offline ${hasDrafts ? `(${drafts.length} drafts)` : ''}</span>`;
       headerStatus.style.background = '#fef3c7';
       headerStatus.style.color = '#b45309';
     } else {
-      headerStatus.innerHTML = '<span class="status-dot"></span><span>Online</span>';
-      headerStatus.style.background = 'var(--success-light)';
-      headerStatus.style.color = 'var(--success)';
+      if (hasDrafts) {
+        headerStatus.innerHTML = `<span class="status-dot" style="background:#2563eb;"></span><span>Syncing ${drafts.length}...</span>`;
+        headerStatus.style.background = '#dbeafe';
+        headerStatus.style.color = '#1d4ed8';
+      } else {
+        headerStatus.innerHTML = '<span class="status-dot"></span><span>Online</span>';
+        headerStatus.style.background = 'var(--success-light)';
+        headerStatus.style.color = 'var(--success)';
+      }
+    }
+  }
+
+  // Task 4C-5: Background Sync of Offline Drafts
+  async function syncOfflineDrafts() {
+    if (!navigator.onLine) return;
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_OFFLINE) || localStorage.getItem('munshi_offline_drafts') || '[]';
+      const drafts = JSON.parse(raw);
+      if (!drafts || drafts.length === 0) return;
+
+      console.log(`[Supplier Saarthi] Syncing ${drafts.length} offline drafts...`);
+      const remaining = [];
+      let syncedCount = 0;
+
+      for (const draft of drafts) {
+        try {
+          const payload = { ...draft };
+          delete payload.offline;
+          delete payload.saved_locally_at;
+          payload.confirmed = true;
+          await apiSaveRecord(payload);
+          syncedCount++;
+        } catch (e) {
+          console.warn('[Supplier Saarthi] Failed to sync draft, will retry later:', e);
+          remaining.push(draft);
+        }
+      }
+
+      localStorage.setItem(STORAGE_KEY_OFFLINE, JSON.stringify(remaining));
+      updateOfflineBanner();
+
+      if (syncedCount > 0) {
+        const notif = document.createElement('div');
+        notif.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#15803d;color:#ffffff;padding:10px 18px;border-radius:24px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2);';
+        notif.textContent = `✅ ${syncedCount} Offline Record(s) Server par sync ho gaye!`;
+        document.body.appendChild(notif);
+        setTimeout(() => notif.remove(), 4000);
+      }
+    } catch (e) {
+      console.error('[Supplier Saarthi] Offline sync error:', e);
     }
   }
 
@@ -1169,8 +1224,16 @@
   // Auto-init on DOMContentLoaded
   document.addEventListener('DOMContentLoaded', function () {
     updateOfflineBanner();
-    window.addEventListener('online', updateOfflineBanner);
+    window.addEventListener('online', function () {
+      updateOfflineBanner();
+      syncOfflineDrafts();
+    });
     window.addEventListener('offline', updateOfflineBanner);
+
+    // Initial check to sync any unsynced offline records
+    if (navigator.onLine) {
+      syncOfflineDrafts();
+    }
 
     initDeliveryPage();
     initPromisePage();
@@ -1217,6 +1280,7 @@
     apiUploadPhoto,
     renderConfirmationCard,
     saveOfflineDraft,
+    syncOfflineDrafts,
     loadCurrentDraft,
     clearCurrentDraft,
     removePhoto,

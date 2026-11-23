@@ -14,7 +14,7 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0;">{{ supplier_name }}</h2>
           <span style="font-size: 11px; font-weight: 600; background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 9999px;">
-            {{ records|length }} Records
+            <span id="timeline-total-count">{{ records|length }}</span> Records
           </span>
         </div>
         <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px;">
@@ -23,13 +23,34 @@
       </div>
     </div>
     
-    <!-- WhatsApp Share Button -->
+    <!-- WhatsApp Share Button (Task 4C-3) -->
     <a href="https://wa.me/?text={{ whatsapp_text|urlencode }}" target="_blank" rel="noopener noreferrer" style="background: #25d366; color: #ffffff; text-decoration: none; padding: 9px 15px; border-radius: 10px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(37,211,102,0.3); transition: transform 0.15s ease;">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
         <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.664-.698c.969.584 1.83.917 2.801.918l.005-.001c3.18 0 5.767-2.586 5.767-5.766.001-3.18-2.585-5.766-5.767-5.766zm0 10.455c-.93 0-1.802-.279-2.544-.766l-.182-.12-1.58.414.422-1.54-.118-.188c-.534-.849-.824-1.815-.823-2.819.001-2.583 2.102-4.684 4.686-4.684 2.583 0 4.685 2.101 4.685 4.684 0 2.584-2.102 4.685-4.685 4.685zm6.541-11.517c-1.748-1.748-4.072-2.71-6.546-2.71-5.101 0-9.248 4.148-9.249 9.25 0 1.63.424 3.221 1.231 4.619l-1.308 4.777 4.887-1.282c1.341.731 2.853 1.117 4.434 1.118h.005c5.099 0 9.247-4.148 9.248-9.251 0-2.473-.963-4.797-2.708-6.543z"/>
       </svg>
       <span>WhatsApp Share</span>
     </a>
+  </div>
+</div>
+
+<!-- Task 4C-1: Search Box & Filters -->
+<div class="box-card" style="margin-bottom: 16px; padding: 12px;">
+  <div style="position: relative; margin-bottom: 10px;">
+    <input type="text" id="timeline-search-input" placeholder="🔍 Khojein: product, problem ya tareekh..." oninput="filterTimeline()" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; background: #ffffff;">
+  </div>
+  <div style="display: flex; gap: 6px; overflow-x: auto; padding-bottom: 2px;">
+    <button type="button" class="timeline-tab active" data-filter="all" onclick="setTimelineFilter('all', this)" style="background: var(--primary); color: #ffffff; border: 1px solid var(--primary); padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 700; cursor: pointer;">
+      Sabhi
+    </button>
+    <button type="button" class="timeline-tab" data-filter="OPEN" onclick="setTimelineFilter('OPEN', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer;">
+      ⏳ Khula (Open)
+    </button>
+    <button type="button" class="timeline-tab" data-filter="DELIVERY" onclick="setTimelineFilter('DELIVERY', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer;">
+      📦 Deliveries
+    </button>
+    <button type="button" class="timeline-tab" data-filter="PROMISE" onclick="setTimelineFilter('PROMISE', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 5px 12px; border-radius: 16px; font-size: 12px; font-weight: 600; cursor: pointer;">
+      🤝 Promises
+    </button>
   </div>
 </div>
 
@@ -42,22 +63,23 @@
 </div>
 
 <!-- Chronological Timeline List -->
-<div class="timeline-container" style="position: relative; padding-left: 20px; border-left: 2px solid #e2e8f0; margin-left: 10px;">
+<div class="timeline-container" id="timeline-list" style="position: relative; padding-left: 20px; border-left: 2px solid #e2e8f0; margin-left: 10px;">
   {% for r in records %}
-  <div class="timeline-item" style="position: relative; margin-bottom: 20px;">
+  {% set is_promise = ('PROMISE' in r.record_type|default('')) %}
+  <div class="timeline-item timeline-card" id="timeline-record-{{ r.id }}" data-record-type="{% if is_promise %}PROMISE{% else %}DELIVERY{% endif %}" data-record-status="{{ r.status|default('OPEN') }}" style="position: relative; margin-bottom: 20px; transition: all 0.25s ease;">
     <!-- Timeline Dot -->
-    <div style="position: absolute; left: -27px; top: 14px; width: 12px; height: 12px; border-radius: 50%; background: {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif r.record_type == 'SUPPLIER_PROMISE' %}var(--warning){% else %}var(--danger){% endif %}; border: 2px solid #ffffff; box-shadow: 0 0 0 2px {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif r.record_type == 'SUPPLIER_PROMISE' %}var(--warning){% else %}var(--danger){% endif %};"></div>
+    <div style="position: absolute; left: -27px; top: 14px; width: 12px; height: 12px; border-radius: 50%; background: {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif is_promise %}var(--warning){% else %}var(--danger){% endif %}; border: 2px solid #ffffff; box-shadow: 0 0 0 2px {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif is_promise %}var(--warning){% else %}var(--danger){% endif %};"></div>
 
     <!-- Timeline Card -->
-    <div class="box-card" style="border-left: 4px solid {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif r.record_type == 'SUPPLIER_PROMISE' %}var(--warning){% else %}var(--danger){% endif %}; padding: 16px;">
+    <div class="box-card" style="border-left: 4px solid {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}var(--success){% elif is_promise %}var(--warning){% else %}var(--danger){% endif %}; padding: 16px;">
       <!-- Card Top: Status & Date -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <div style="display: flex; align-items: center; gap: 6px;">
-          <span style="font-size: 11px; font-weight: 700; color: {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}#15803d; background: #dcfce7; border: 1px solid #bbf7d0;{% elif r.status == 'DISPUTED' %}#b45309; background: #fef3c7; border: 1px solid #fde68a;{% else %}#b91c1c; background: #fee2e2; border: 1px solid #fecaca;{% endif %} padding: 2px 8px; border-radius: 6px;">
+          <span class="status-pill-{{ r.id }}" style="font-size: 11px; font-weight: 700; color: {% if r.status == 'RESOLVED' or r.status == 'FULFILLED' %}#15803d; background: #dcfce7; border: 1px solid #bbf7d0;{% elif r.status == 'DISPUTED' %}#b45309; background: #fef3c7; border: 1px solid #fde68a;{% else %}#b91c1c; background: #fee2e2; border: 1px solid #fecaca;{% endif %} padding: 2px 8px; border-radius: 6px;">
             {{ r.status|default('OPEN') }}
           </span>
           <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); background: #f1f5f9; padding: 2px 8px; border-radius: 6px;">
-            {% if r.record_type == 'DELIVERY_DISCREPANCY' %}DELIVERY CHECK{% elif r.record_type == 'SUPPLIER_PROMISE' %}PROMISE NOTE{% else %}{{ r.record_type }}{% endif %}
+            {% if is_promise %}PROMISE NOTE{% else %}DELIVERY CHECK{% endif %}
           </span>
         </div>
         <span style="font-size: 12px; font-weight: 500; color: var(--text-muted);">
@@ -66,7 +88,7 @@
       </div>
 
       <!-- Card Title / Summary -->
-      <div style="font-size: 15px; font-weight: 700; color: var(--text-main); line-height: 1.4;">
+      <div class="record-searchable-text" style="font-size: 15px; font-weight: 700; color: var(--text-main); line-height: 1.4;">
         {{ r.title|default(r.summary_text|default('Record Summary')) }}
       </div>
 
@@ -77,7 +99,7 @@
           Defects & Quantities:
         </div>
         {% for line in r.lines %}
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0;">
+        <div class="record-line-item" style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; padding: 4px 0; border-bottom: 1px dashed #e2e8f0;">
           <div style="font-weight: 600; color: var(--text-main);">
             • {{ line.product_name|default('Product') }}
           </div>
@@ -96,7 +118,7 @@
         {% endfor %}
       </div>
       {% elif r.summary_text and r.summary_text != r.title %}
-      <div style="font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
+      <div class="record-searchable-text" style="font-size: 13px; color: var(--text-muted); margin-top: 6px; line-height: 1.4;">
         {{ r.summary_text }}
       </div>
       {% endif %}
@@ -122,14 +144,23 @@
         <span>{{ r.follow_up_date }}</span>
       </div>
       {% endif %}
+
+      <!-- Inline Mark Done if Open -->
+      {% if r.status == 'OPEN' or r.status == 'DISPUTED' %}
+      <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-mark-timeline-done" onclick="markTimelineRecordDone({{ r.id }}, {% if is_promise %}'FULFILLED'{% else %}'RESOLVED'{% endif %}, this)" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+          <span>✓ Hisaab Poora Hua</span>
+        </button>
+      </div>
+      {% endif %}
     </div>
   </div>
   {% else %}
   <div class="box-card" style="text-align: center; padding: 36px 20px;">
     <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
-    <div style="font-size: 17px; font-weight: 700; color: var(--success);">Koi Pending Record Nahi Hai!</div>
+    <div style="font-size: 17px; font-weight: 700; color: var(--success);">Koi Record Nahi Hai!</div>
     <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
-      Is vyapari ka sara hisaab barabar hai. Sabhi delivery aur promises clear hain.
+      Is vyapari ka sara hisaab barabar hai.
     </div>
   </div>
   {% endfor %}
@@ -149,6 +180,89 @@
 </div>
 
 <script>
+let currentCategoryFilter = 'all';
+
+function setTimelineFilter(filterKey, clickedBtn) {
+  currentCategoryFilter = filterKey;
+  const tabs = document.querySelectorAll('.timeline-tab');
+  tabs.forEach(tab => {
+    tab.style.background = '#ffffff';
+    tab.style.borderColor = 'var(--border)';
+    tab.style.color = 'var(--text-main)';
+    tab.style.fontWeight = '600';
+  });
+  if (clickedBtn) {
+    clickedBtn.style.background = 'var(--primary)';
+    clickedBtn.style.borderColor = 'var(--primary)';
+    clickedBtn.style.color = '#ffffff';
+    clickedBtn.style.fontWeight = '700';
+  }
+  filterTimeline();
+}
+
+function filterTimeline() {
+  const query = (document.getElementById('timeline-search-input')?.value || '').toLowerCase().trim();
+  const items = document.querySelectorAll('.timeline-card');
+
+  items.forEach(item => {
+    const rType = item.getAttribute('data-record-type');
+    const rStatus = item.getAttribute('data-record-status');
+    const cardText = item.innerText.toLowerCase();
+
+    const matchesSearch = !query || cardText.includes(query);
+    let matchesTab = false;
+    if (currentCategoryFilter === 'all') {
+      matchesTab = true;
+    } else if (currentCategoryFilter === 'OPEN') {
+      matchesTab = (rStatus === 'OPEN' || rStatus === 'DISPUTED');
+    } else if (currentCategoryFilter === 'DELIVERY') {
+      matchesTab = (rType === 'DELIVERY');
+    } else if (currentCategoryFilter === 'PROMISE') {
+      matchesTab = (rType === 'PROMISE');
+    }
+
+    if (matchesSearch && matchesTab) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+async function markTimelineRecordDone(recordId, newStatus, buttonEl) {
+  if (!confirm('Kya is record ka hisaab poora ho gaya hai?')) return;
+  buttonEl.disabled = true;
+  buttonEl.innerText = 'Updating...';
+
+  try {
+    const resp = await fetch(`/api/records/${recordId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus || 'RESOLVED' })
+    });
+    if (!resp.ok) {
+      throw new Error('Server error');
+    }
+
+    const pill = document.querySelector(`.status-pill-${recordId}`);
+    if (pill) {
+      pill.textContent = newStatus;
+      pill.style.color = '#15803d';
+      pill.style.background = '#dcfce7';
+      pill.style.borderColor = '#bbf7d0';
+    }
+    const card = document.getElementById(`timeline-record-${recordId}`);
+    if (card) {
+      card.setAttribute('data-record-status', newStatus);
+    }
+    buttonEl.parentElement.remove();
+  } catch (e) {
+    alert('Status update nahi ho paya: ' + e.message);
+    buttonEl.disabled = false;
+    buttonEl.innerText = '✓ Hisaab Poora Hua';
+  }
+}
+
 function openPhotoLightbox(url) {
   const modal = document.getElementById('photo-lightbox');
   const img = document.getElementById('photo-lightbox-img');
@@ -157,6 +271,7 @@ function openPhotoLightbox(url) {
     modal.classList.add('active');
   }
 }
+
 function closePhotoLightbox(e) {
   const modal = document.getElementById('photo-lightbox');
   if (modal) {

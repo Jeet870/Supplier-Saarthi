@@ -257,3 +257,32 @@ def test_query_mocked_pending():
         assert len(data.get("records", [])) == 1
         assert "Sharma" in data.get("answer_text", "")
 
+
+def test_pending_page_has_voice_query_and_mark_done():
+    """Verify Person C Day 4 features on /pending."""
+    response = client.get("/pending")
+    assert response.status_code == 200
+    html = response.text
+    assert "pending-mic-btn" in html
+    assert "pending-query-input" in html
+    assert "btn-mark-done" in html or "Kuch Baqaya Nahi" in html
+
+
+def test_timeline_page_has_search_and_filters():
+    """Verify Person C Day 4 features on /timeline/1."""
+    response = client.get("/timeline/1")
+    assert response.status_code == 200
+    html = response.text
+    assert "timeline-search-input" in html
+    assert "timeline-tab" in html
+
+
+def test_patch_status_mocked():
+    """Verify Day 4 PATCH /api/records/{id}/status endpoint."""
+    with patch("app.db.update_record_status", return_value={"id": 1, "status": "RESOLVED"}):
+        response = client.patch("/api/records/1/status", json={"status": "RESOLVED"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data.get("status") == "RESOLVED"
+
+

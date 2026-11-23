@@ -7,7 +7,7 @@
   <div>
     <h2 style="font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 8px;">
       ⏳ Baqaya Records
-      <span style="font-size: 12px; font-weight: 600; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 9999px;">
+      <span id="open-records-count-badge" style="font-size: 12px; font-weight: 600; background: #fee2e2; color: #dc2626; padding: 2px 8px; border-radius: 9999px;">
         {{ records|length }} Open
       </span>
     </h2>
@@ -17,33 +17,93 @@
   </div>
 </div>
 
-<!-- Category Filter Tabs -->
-<div class="pending-filter-tabs" style="display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px;">
-  <button type="button" class="filter-tab active" data-filter="all" onclick="applyFilter('all', this)" style="background: var(--primary); color: #ffffff; border: 1px solid var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;">
-    Sabhi ({{ records|length }})
-  </button>
-  <button type="button" class="filter-tab" data-filter="DELIVERY" onclick="applyFilter('DELIVERY', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
-    📦 Deliveries
-  </button>
-  <button type="button" class="filter-tab" data-filter="PROMISE" onclick="applyFilter('PROMISE', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
-    🤝 Promises
-  </button>
+<!-- Task 4C-4: Voice Question Station (/api/query) -->
+<div class="box-card" style="background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%); border: 1.5px solid #bfdbfe; margin-bottom: 16px; padding: 14px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+    <div style="font-size: 14px; font-weight: 800; color: #1e40af; display: flex; align-items: center; gap: 6px;">
+      <span>🎙️</span>
+      <span>Bol Kar Sawal Poochhein</span>
+    </div>
+    <span style="font-size: 11px; font-weight: 600; background: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 9999px;">
+      AI Voice Query
+    </span>
+  </div>
+
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button type="button" id="pending-mic-btn" onclick="toggleVoiceQuery()" style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary); color: #ffffff; border: none; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(37,99,235,0.3); flex-shrink: 0; transition: transform 0.15s ease;">
+      🎤
+    </button>
+    <div style="flex: 1; position: relative;">
+      <input type="text" id="pending-query-input" placeholder="Jaise: Sharma ka kya pending hai?" style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); font-size: 13px; background: #ffffff;" onkeydown="if(event.key === 'Enter') submitVoiceQuery()">
+    </div>
+    <button type="button" id="pending-query-submit-btn" onclick="submitVoiceQuery()" style="background: var(--primary); color: #ffffff; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; flex-shrink: 0;">
+      Poochhein
+    </button>
+  </div>
+
+  <!-- Quick Query Suggestion Chips -->
+  <div style="display: flex; gap: 6px; overflow-x: auto; padding-top: 10px; margin-top: 4px;">
+    <button type="button" class="query-chip" onclick="askQuickQuery('Sharma Distributors ka kya pending hai?')" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap; cursor: pointer;">
+      Sharma ka kya pending hai?
+    </button>
+    <button type="button" class="query-chip" onclick="askQuickQuery('Aaj kya pending hai?')" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap; cursor: pointer;">
+      Aaj kya pending hai?
+    </button>
+    <button type="button" class="query-chip" onclick="askQuickQuery('Sharma ka promise kya tha?')" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap; cursor: pointer;">
+      Sharma ka promise kya tha?
+    </button>
+    <button type="button" class="query-chip" onclick="askQuickQuery('Balaji ka koi damage wala maal pending hai?')" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 3px 10px; font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap; cursor: pointer;">
+      Balaji ka damage maal?
+    </button>
+  </div>
+
+  <!-- AI Voice Answer Box -->
+  <div id="voice-query-result-box" style="display: none; margin-top: 12px; background: #ffffff; border-radius: 10px; border: 1px solid #bfdbfe; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+      <div>
+        <div style="font-size: 11px; font-weight: 700; color: #2563eb; text-transform: uppercase; margin-bottom: 3px;">
+          Jawab (Supplier Saarthi):
+        </div>
+        <div id="voice-query-answer-text" style="font-size: 14px; font-weight: 700; color: #1e293b; line-height: 1.4;">
+        </div>
+      </div>
+      <button type="button" onclick="speakCurrentAnswer()" title="Dobara Suniye" style="background: #dbeafe; color: #1d4ed8; border: none; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; flex-shrink: 0;">
+        🔊 Suno
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Category & Supplier Filter Tabs -->
+<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+  <div class="pending-filter-tabs" style="display: flex; gap: 6px; overflow-x: auto; flex: 1;">
+    <button type="button" class="filter-tab active" data-filter="all" onclick="applyFilter('all', this)" style="background: var(--primary); color: #ffffff; border: 1px solid var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;">
+      Sabhi (<span id="count-tab-all">{{ records|length }}</span>)
+    </button>
+    <button type="button" class="filter-tab" data-filter="DELIVERY" onclick="applyFilter('DELIVERY', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
+      📦 Deliveries
+    </button>
+    <button type="button" class="filter-tab" data-filter="PROMISE" onclick="applyFilter('PROMISE', this)" style="background: #ffffff; border: 1px solid var(--border); color: var(--text-main); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s ease;">
+      🤝 Promises
+    </button>
+  </div>
 </div>
 
 <div class="action-cards" id="pending-records-list">
   {% for r in records %}
   {% set rtype = r.record_type|default('DELIVERY_DISCREPANCY') %}
-  <div class="box-card pending-record-card" data-record-type="{% if 'PROMISE' in rtype %}PROMISE{% else %}DELIVERY{% endif %}" style="border-left: 4px solid {% if 'PROMISE' in rtype %}var(--warning){% else %}var(--danger){% endif %};">
+  {% set is_promise = ('PROMISE' in rtype) %}
+  <div class="box-card pending-record-card" id="record-card-{{ r.id }}" data-record-id="{{ r.id }}" data-record-type="{% if is_promise %}PROMISE{% else %}DELIVERY{% endif %}" data-supplier-name="{{ r.supplier_name|default('')|lower }}" style="border-left: 4px solid {% if is_promise %}var(--warning){% else %}var(--danger){% endif %}; transition: all 0.3s ease;">
     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="font-size: 16px; font-weight: 800; color: var(--text-main);">
           {{ r.supplier_name|default('Supplier') }}
         </span>
-        <span style="font-size: 11px; font-weight: 600; background: {% if 'PROMISE' in rtype %}#fef3c7; color: #b45309;{% else %}#fee2e2; color: #dc2626;{% endif %} padding: 2px 7px; border-radius: 6px;">
-          {% if 'PROMISE' in rtype %}PROMISE{% else %}DELIVERY CHECK{% endif %}
+        <span style="font-size: 11px; font-weight: 600; background: {% if is_promise %}#fef3c7; color: #b45309;{% else %}#fee2e2; color: #dc2626;{% endif %} padding: 2px 7px; border-radius: 6px;">
+          {% if is_promise %}PROMISE{% else %}DELIVERY CHECK{% endif %}
         </span>
       </div>
-      <span style="font-size: 11px; font-weight: 700; color: {% if r.status == 'OPEN' %}var(--danger){% elif r.status == 'DISPUTED' %}#d97706{% else %}var(--success){% endif %}; background: #f8fafc; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
+      <span class="record-status-pill" style="font-size: 11px; font-weight: 700; color: {% if r.status == 'OPEN' %}var(--danger){% elif r.status == 'DISPUTED' %}#d97706{% else %}var(--success){% endif %}; background: #f8fafc; padding: 2px 8px; border-radius: 6px; border: 1px solid var(--border);">
         {{ r.status|default('OPEN') }}
       </span>
     </div>
@@ -52,18 +112,26 @@
       {{ r.detail|default(r.summary_text|default('Open discrepancy or promise awaiting settlement')) }}
     </div>
 
-    <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+    <div style="margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
       <span style="font-size: 12px; color: var(--text-muted);">
         📅 {{ r.event_date|default('Recent') }}
       </span>
-      <a href="/timeline/{{ r.supplier_id|default(1) }}" style="font-size: 13px; color: var(--primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px;">
-        <span>Timeline Dekhein</span>
-        <span>➔</span>
-      </a>
+
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <!-- Task 4C-2: Mark Done Button -->
+        <button type="button" class="btn-mark-done" onclick="markRecordDone({{ r.id }}, {% if is_promise %}'FULFILLED'{% else %}'RESOLVED'{% endif %}, this)" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s ease;">
+          <span>✓ Hisaab Hua</span>
+        </button>
+
+        <a href="/timeline/{{ r.supplier_id|default(1) }}" style="font-size: 12px; color: var(--primary); font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 4px; padding: 6px 8px;">
+          <span>Timeline</span>
+          <span>➔</span>
+        </a>
+      </div>
     </div>
   </div>
   {% else %}
-  <div class="box-card" style="text-align: center; padding: 36px 20px;">
+  <div class="box-card" id="empty-pending-card" style="text-align: center; padding: 36px 20px;">
     <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
     <div style="font-size: 17px; font-weight: 700; color: var(--success); margin-top: 4px;">Kuch Baqaya Nahi!</div>
     <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Sabhi vyapariyon ka hisaab clear hai.</div>
@@ -72,8 +140,8 @@
 </div>
 
 <script>
+// Filter by category (Deliveries / Promises / All)
 function applyFilter(category, clickedBtn) {
-  // Update button active states
   const tabs = document.querySelectorAll('.filter-tab');
   tabs.forEach(tab => {
     tab.style.background = '#ffffff';
@@ -81,12 +149,13 @@ function applyFilter(category, clickedBtn) {
     tab.style.color = 'var(--text-main)';
     tab.style.fontWeight = '600';
   });
-  clickedBtn.style.background = 'var(--primary)';
-  clickedBtn.style.borderColor = 'var(--primary)';
-  clickedBtn.style.color = '#ffffff';
-  clickedBtn.style.fontWeight = '700';
+  if (clickedBtn) {
+    clickedBtn.style.background = 'var(--primary)';
+    clickedBtn.style.borderColor = 'var(--primary)';
+    clickedBtn.style.color = '#ffffff';
+    clickedBtn.style.fontWeight = '700';
+  }
 
-  // Filter cards
   const cards = document.querySelectorAll('.pending-record-card');
   cards.forEach(card => {
     const rType = card.getAttribute('data-record-type');
@@ -96,6 +165,191 @@ function applyFilter(category, clickedBtn) {
       card.style.display = 'none';
     }
   });
+}
+
+// Task 4C-2: Mark record as Done (RESOLVED / FULFILLED)
+async function markRecordDone(recordId, newStatus, buttonEl) {
+  if (!confirm('Kya is item ka hisaab poora ho gaya hai?')) {
+    return;
+  }
+
+  buttonEl.disabled = true;
+  buttonEl.innerHTML = '<span>Ghuma raha hai...</span>';
+
+  try {
+    const resp = await fetch(`/api/records/${recordId}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus || 'RESOLVED' })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error || 'Server error');
+    }
+
+    // Success: Animate and remove card
+    const card = document.getElementById(`record-card-${recordId}`);
+    if (card) {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(-10px)';
+      setTimeout(() => {
+        card.remove();
+        updatePendingCountBadge();
+      }, 300);
+    }
+  } catch (err) {
+    alert('Hisaab update nahi ho paya: ' + err.message);
+    buttonEl.disabled = false;
+    buttonEl.innerHTML = '<span>✓ Hisaab Hua</span>';
+  }
+}
+
+function updatePendingCountBadge() {
+  const visibleCards = document.querySelectorAll('.pending-record-card');
+  const count = visibleCards.length;
+  const badge = document.getElementById('open-records-count-badge');
+  if (badge) {
+    badge.textContent = `${count} Open`;
+  }
+  const tabAllCount = document.getElementById('count-tab-all');
+  if (tabAllCount) {
+    tabAllCount.textContent = count;
+  }
+
+  if (count === 0) {
+    const list = document.getElementById('pending-records-list');
+    if (list && !document.getElementById('empty-pending-card')) {
+      list.innerHTML = `
+        <div class="box-card" id="empty-pending-card" style="text-align: center; padding: 36px 20px;">
+          <div style="font-size: 40px; margin-bottom: 10px;">🎉</div>
+          <div style="font-size: 17px; font-weight: 700; color: var(--success); margin-top: 4px;">Kuch Baqaya Nahi!</div>
+          <div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">Sabhi vyapariyon ka hisaab clear hai.</div>
+        </div>
+      `;
+    }
+  }
+}
+
+// Task 4C-4: Voice Question & /api/query Handler
+let currentSpeechAnswer = '';
+
+function askQuickQuery(queryText) {
+  const input = document.getElementById('pending-query-input');
+  if (input) input.value = queryText;
+  submitVoiceQuery();
+}
+
+async function submitVoiceQuery() {
+  const input = document.getElementById('pending-query-input');
+  const text = (input ? input.value : '').trim();
+  if (!text) return;
+
+  const btn = document.getElementById('pending-query-submit-btn');
+  const resBox = document.getElementById('voice-query-result-box');
+  const answerEl = document.getElementById('voice-query-answer-text');
+
+  if (btn) btn.disabled = true;
+  if (answerEl) answerEl.textContent = 'Soch raha hoon... ⏳';
+  if (resBox) resBox.style.display = 'block';
+
+  try {
+    const resp = await fetch('/api/query', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+    const data = await resp.json();
+    currentSpeechAnswer = data.answer_text || 'Koi javab nahi mila.';
+    if (answerEl) {
+      answerEl.textContent = currentSpeechAnswer;
+    }
+    speakCurrentAnswer();
+
+    // If matching records returned, highlight them
+    if (data.records && data.records.length > 0) {
+      const returnedIds = new Set(data.records.map(r => String(r.id)));
+      const allCards = document.querySelectorAll('.pending-record-card');
+      allCards.forEach(card => {
+        const id = card.getAttribute('data-record-id');
+        if (returnedIds.has(id)) {
+          card.style.display = 'block';
+          card.style.boxShadow = '0 0 0 2px var(--primary)';
+        } else {
+          card.style.boxShadow = 'none';
+        }
+      });
+    }
+  } catch (err) {
+    if (answerEl) {
+      answerEl.textContent = 'Sawal poochhne mein dikkat aayi: ' + err.message;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function speakCurrentAnswer() {
+  if (!currentSpeechAnswer || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(currentSpeechAnswer);
+  utterance.lang = 'hi-IN';
+  utterance.rate = 0.95;
+  window.speechSynthesis.speak(utterance);
+}
+
+// Mic toggle using Web Speech API or Audio Recording
+let recognitionInstance = null;
+function toggleVoiceQuery() {
+  const micBtn = document.getElementById('pending-mic-btn');
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (SpeechRecognition) {
+    if (recognitionInstance) {
+      recognitionInstance.stop();
+      recognitionInstance = null;
+      if (micBtn) micBtn.style.background = 'var(--primary)';
+      return;
+    }
+
+    recognitionInstance = new SpeechRecognition();
+    recognitionInstance.lang = 'hi-IN';
+    recognitionInstance.continuous = false;
+    recognitionInstance.interimResults = false;
+
+    if (micBtn) {
+      micBtn.style.background = '#dc2626';
+    }
+
+    recognitionInstance.onresult = function (event) {
+      const transcript = event.results[0][0].transcript;
+      const input = document.getElementById('pending-query-input');
+      if (input) input.value = transcript;
+      if (micBtn) micBtn.style.background = 'var(--primary)';
+      recognitionInstance = null;
+      submitVoiceQuery();
+    };
+
+    recognitionInstance.onerror = function () {
+      if (micBtn) micBtn.style.background = 'var(--primary)';
+      recognitionInstance = null;
+    };
+
+    recognitionInstance.onend = function () {
+      if (micBtn) micBtn.style.background = 'var(--primary)';
+      recognitionInstance = null;
+    };
+
+    recognitionInstance.start();
+  } else {
+    // Fallback: prompt for text if SpeechRecognition not supported in browser
+    const question = prompt('Apna sawal likhein (Jaise: Sharma Distributors ka kya pending hai?):');
+    if (question) {
+      const input = document.getElementById('pending-query-input');
+      if (input) input.value = question;
+      submitVoiceQuery();
+    }
+  }
 }
 </script>
 {% endblock %}
