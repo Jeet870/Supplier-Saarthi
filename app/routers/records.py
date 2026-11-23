@@ -37,6 +37,11 @@ def list_products():
 @router.post("/api/records", status_code=status.HTTP_201_CREATED)
 def create_record(record: Record):
     """Save a confirmed delivery discrepancy or supplier promise."""
+    if not record.confirmed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "Only confirmed records can be saved. Please confirm before saving."},
+        )
     try:
         data = record.model_dump()
         saved = db.save_record(data)
@@ -46,6 +51,7 @@ def create_record(record: Record):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": f"Failed to save record: {str(e)}"},
         )
+
 
 
 @router.get("/api/timeline/{supplier_id}")

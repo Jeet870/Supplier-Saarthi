@@ -47,12 +47,14 @@ def save_record(record_data: Dict[str, Any]) -> Dict[str, Any]:
     """Insert a new delivery discrepancy or supplier promise into the records table."""
     client = get_supabase_client()
 
-    # If confirmed is true and status was DRAFT, promote to OPEN
     confirmed = record_data.get("confirmed", False)
-    status = record_data.get("status", "DRAFT")
+    if not confirmed:
+        raise ValueError("Only confirmed records can be saved. Please confirm before saving.")
+
+    status = record_data.get("status", "OPEN")
     if hasattr(status, "value"):
         status = status.value
-    if confirmed and status == "DRAFT":
+    if status == "DRAFT":
         status = "OPEN"
 
     record_type = record_data.get("record_type")
