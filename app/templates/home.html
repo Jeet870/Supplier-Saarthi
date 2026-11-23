@@ -8,7 +8,8 @@
   <a href="/pending" class="metric-card">
     <div class="metric-label">Open Deliveries</div>
     <div class="metric-value-row">
-      <div class="metric-number" style="color: var(--danger);">{{ open_deliveries|default(2) }}</div>
+      <div class="metric-number" id="home-open-deliveries" style="color: var(--danger);">{{ open_deliveries|default(2)
+        }}</div>
       <div class="metric-icon-pill" style="background: var(--danger-light); color: var(--danger);">🚚</div>
     </div>
   </a>
@@ -16,7 +17,8 @@
   <a href="/pending" class="metric-card">
     <div class="metric-label">Active Promises</div>
     <div class="metric-value-row">
-      <div class="metric-number" style="color: var(--success);">{{ open_promises|default(1) }}</div>
+      <div class="metric-number" id="home-open-promises" style="color: var(--success);">{{ open_promises|default(1) }}
+      </div>
       <div class="metric-icon-pill" style="background: var(--success-light); color: var(--success);">🤝</div>
     </div>
   </a>
@@ -33,7 +35,9 @@
 <!-- Primary Voice Flow Section -->
 <div class="section-headline-group">
   <div class="section-headline">Instant Voice Capture (Bolo aur Record Karo)</div>
-  <span style="font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px;">⚡ Fast 3-Tap Flow</span>
+  <span
+    style="font-size: 11px; font-weight: 700; color: var(--success); background: var(--success-light); padding: 2px 8px; border-radius: 4px;">⚡
+    Fast 3-Tap Flow</span>
 </div>
 
 <div class="hero-action-grid">
@@ -89,24 +93,56 @@
 </div>
 
 <div class="metrics-row" style="grid-template-columns: 1fr 1fr;">
-  <a href="/pending" class="box-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
-    <div style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #fffbeb; display: flex; align-items: center; justify-content: center;">⏳</div>
+  <a href="/pending" class="box-card"
+    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
+    <div
+      style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #fffbeb; display: flex; align-items: center; justify-content: center;">
+      ⏳</div>
     <div>
       <div style="font-size: 15px; font-weight: 700;">Pending Actions</div>
-      <div style="font-size: 12px; color: var(--text-muted);">{{ open_count|default(3) }} records resolution pending</div>
+      <div style="font-size: 12px; color: var(--text-muted);"><span id="home-pending-count">{{ open_count|default(3)
+          }}</span> records pending</div>
     </div>
   </a>
 
-  <a href="/suppliers" class="box-card" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
-    <div style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; display: flex; align-items: center; justify-content: center;">🏪</div>
+  <a href="/suppliers" class="box-card"
+    style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 14px; padding: 16px;">
+    <div
+      style="font-size: 26px; width: 44px; height: 44px; border-radius: 12px; background: #eff6ff; display: flex; align-items: center; justify-content: center;">
+      🏪</div>
     <div>
-      <div style="font-size: 15px; font-weight: 700;">Suppliers Directory</div>
-      <div style="font-size: 12px; color: var(--text-muted);">Timelines and WhatsApp exports</div>
+      <div style="font-size: 15px; font-weight: 700;">Vyapari Directory</div>
+      <div style="font-size: 12px; color: var(--text-muted);">{{ total_suppliers|default(4) }} registered distributors
+      </div>
     </div>
   </a>
 </div>
 
-<div class="disclaimer-footer">
-  Supplier Saarthi • Voice-First Accountability for Kirana Stores
+<div class="disclaimer-text" style="margin-top: 24px;">
+  ⚠️ <em>"Yeh ek record hai, kanooni saboot nahi."</em><br>
+  Bolo, confirm karo, aur vyapari ke hisaab ka record rakho.
 </div>
+
+<script>
+  // Dynamic refresh of summary counts when online
+  document.addEventListener('DOMContentLoaded', function () {
+    if (navigator.onLine) {
+      fetch('/api/summary')
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            const delEl = document.getElementById('home-open-deliveries');
+            const promEl = document.getElementById('home-open-promises');
+            const pendCount = document.getElementById('home-pending-count');
+            if (delEl && typeof data.open_deliveries === 'number') delEl.textContent = data.open_deliveries;
+            if (promEl && typeof data.open_promises === 'number') promEl.textContent = data.open_promises;
+            if (pendCount && typeof data.open_deliveries === 'number' && typeof data.open_promises === 'number') {
+              pendCount.textContent = data.open_deliveries + data.open_promises;
+            }
+          }
+        })
+        .catch(() => { }); // Gracefully keep fallback values if network or route is unavailable
+    }
+  });
+</script>
 {% endblock %}

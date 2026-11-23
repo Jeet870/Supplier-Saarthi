@@ -54,6 +54,24 @@
   </div>
 </div>
 
+<!-- Photo Attachment & Evidence Section (Task 3C-2) -->
+<div class="box-card" style="padding: 14px 18px;">
+  <div class="form-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+    <span>📸 Bill ya Maal ki Photo (Evidence):</span>
+    <span style="font-size: 11px; color: var(--text-muted);">Camera / Gallery</span>
+  </div>
+
+  <input type="file" id="delivery-photo-input" accept="image/*" capture="environment" style="display: none;">
+
+  <button type="button" id="btn-trigger-photo" class="btn-photo-attach">
+    <span style="font-size: 18px;">📷</span>
+    <span>Bill / Maal ki Photo Jodein</span>
+  </button>
+
+  <div id="photo-upload-status" class="photo-upload-status" style="display: none;"></div>
+  <div id="photo-previews-container" class="photo-previews-grid" style="display: none;"></div>
+</div>
+
 <!-- Keyboard Fallback Section -->
 <div class="box-card" style="padding: 16px;">
   <label for="text-fallback" class="form-label">Keyboard Fallback (Agar awaaz kaam na kare):</label>
@@ -67,4 +85,12 @@
 
 <!-- Dynamic Confirmation Review Card Container -->
 <div id="confirmation-card-area" style="display: none;"></div>
+
+<!-- Photo Lightbox Modal -->
+<div id="photo-lightbox" class="photo-lightbox-modal" onclick="closePhotoLightbox(event)">
+  <div class="photo-lightbox-content" onclick="event.stopPropagation()">
+    <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox()">✕</button>
+    <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="Evidence Photo">
+  </div>
+</div>
 {% endblock %}

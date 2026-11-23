@@ -101,6 +101,20 @@
       </div>
       {% endif %}
 
+      <!-- Attached Evidence Photos (Task 3C-2 & Section 3) -->
+      {% if r.photos and r.photos|length > 0 %}
+      <div style="margin-top: 10px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px;">
+          📸 Evidence Photos ({{ r.photos|length }}):
+        </div>
+        <div class="timeline-photos-row">
+          {% for p_url in r.photos %}
+          <img src="{{ p_url }}" class="timeline-photo-thumb" alt="Evidence Photo" onclick="openPhotoLightbox('{{ p_url }}')" onerror="this.style.display='none'">
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
       <!-- Follow-up date reminder if promise -->
       {% if r.follow_up_date %}
       <div style="margin-top: 8px; font-size: 12px; color: #d97706; font-weight: 600; display: flex; align-items: center; gap: 4px;">
@@ -121,8 +135,33 @@
   {% endfor %}
 </div>
 
+<!-- Photo Lightbox Modal -->
+<div id="photo-lightbox" class="photo-lightbox-modal" onclick="closePhotoLightbox(event)">
+  <div class="photo-lightbox-content" onclick="event.stopPropagation()">
+    <button type="button" class="photo-lightbox-close" onclick="closePhotoLightbox()">✕</button>
+    <img id="photo-lightbox-img" class="photo-lightbox-img" src="" alt="Evidence Photo">
+  </div>
+</div>
+
 <div class="disclaimer-text" style="margin-top: 24px;">
   ⚠️ <em>"Yeh ek record hai, kanooni saboot nahi."</em><br>
   WhatsApp share se vyapari ko seedha hisaab bheja ja sakta hai.
 </div>
+
+<script>
+function openPhotoLightbox(url) {
+  const modal = document.getElementById('photo-lightbox');
+  const img = document.getElementById('photo-lightbox-img');
+  if (modal && img) {
+    img.src = url;
+    modal.classList.add('active');
+  }
+}
+function closePhotoLightbox(e) {
+  const modal = document.getElementById('photo-lightbox');
+  if (modal) {
+    modal.classList.remove('active');
+  }
+}
+</script>
 {% endblock %}
