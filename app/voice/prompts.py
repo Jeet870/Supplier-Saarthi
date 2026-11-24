@@ -113,6 +113,8 @@ PROMISE_SCHEMA = """Return exactly this JSON shape:
 PROMISE RULES
 - A promise is something the supplier agreed to do later, for example a discount, extra free goods, a replacement,
   a credit note, more days to pay, or a price that will not change.
+- When the shopkeeper says "N% extra dena", "N% extra" or "N% discount", promise_type is DISCOUNT, value is N, value_type is PERCENT.
+- When the supplier agrees to send short or damaged items later ("kal bhej denge", "agli delivery mein dega", "replace karega"), promise_type is REPLACEMENT.
 - applies_to: NEXT_ORDER if the shopkeeper said "agli baar" / "next order"; DATE if a specific date was said
   (put that date in follow_up_date); otherwise NONE.
 - If the type of promise is unclear, promise_type is null and you ask.

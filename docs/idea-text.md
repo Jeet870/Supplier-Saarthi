@@ -1,0 +1,14 @@
+# Supplier Saarthi — Hackathon Idea Submission
+
+**Target Word Count:** 350–450 words  
+**Actual Word Count:** 404 words (Text Only)
+
+---
+
+Small kirana shopkeepers across India receive multiple commercial supplier deliveries daily while managing walk-in customers. During delivery drops, discrepancies happen routinely: cases arrive short, packets are torn or leaking, bill rates exceed agreed prices, or distributors make verbal promises like replacements, credit notes, and next-order discounts. Because these interactions are verbal and unrecorded, dispute resolution fails by evening. When the weekly invoice arrives, the shopkeeper cannot remember what was missing or promised, and distributors dispute unwritten claims. This leakage directly erodes the slim 5% to 8% operating margin of neighborhood retail stores.
+
+India has over twelve million independent kirana stores operating in dense urban lanes and tier-2 and tier-3 towns. Each store receives fifteen to thirty supplier deliveries each week across FMCG, grains, and dairy. Currently, shopkeepers rely on handwritten scratchpads, pencil marks on physical delivery challans, or pure mental memory. These notes get lost, soiled, or forgotten, leaving the retailer powerless when reconciling supplier balances at the end of the month.
+
+Supplier Saarthi provides a voice-first accountability ledger that runs in the mobile browser. In under ten seconds, a busy shopkeeper taps the mic and speaks naturally in mixed Hindi or Hinglish, for example: *"Sharma ji ka Maggi 5 carton mangaya tha, sirf 4 aaye."* The application uses Groq speech-to-text and language models to identify the supplier, match the catalog SKU, calculate the shortage or damaged quantity, and extract terms like discount percentages or credit periods. The phone immediately speaks back a deterministic Hindi read-back: *"Sharma Distributors se Maggi Noodles 1 carton kam aaya. Sahi hai?"* The retailer taps one green button—Haan—to confirm. If an invoice or damaged pack is present, the camera attaches a photo evidence link in one tap. Each saved record instantly organizes into a supplier timeline with clear status badges. When payment is due, the shopkeeper taps WhatsApp Share to send a pre-filled discrepancy summary. If connectivity drops, records save locally in offline mode and synchronize automatically once online.
+
+Kirana store owners work in dusty, fast-moving environments with physically dirty hands handling crates, sacks, and bills while greeting customers. Opening complex accounting software or typing twenty fields on a touchscreen creates friction they simply abandon. Speaking ten seconds into a phone solves the data entry bottleneck entirely. Voice transcription powered by high-speed inference extracts structured records instantly, giving small merchants effortless accountability without disrupting daily retail counter operations.
