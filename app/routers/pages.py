@@ -1,9 +1,12 @@
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse
 from fastapi.templating import Jinja2Templates
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 # Fallback supplier list for initial UI rendering before database query
 FALLBACK_SUPPLIERS = [
@@ -220,3 +223,15 @@ def pending_page(request: Request):
             "records": records,
         },
     )
+
+
+@router.get("/sw.js")
+def service_worker():
+    """Serve service worker from root scope so it can control the full origin."""
+    return FileResponse(STATIC_DIR / "sw.js", media_type="application/javascript")
+
+
+@router.get("/manifest.json")
+def pwa_manifest():
+    """Serve PWA manifest for Add to Home Screen and mobile offline shell."""
+    return FileResponse(STATIC_DIR / "manifest.json", media_type="application/manifest+json")

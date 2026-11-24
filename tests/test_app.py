@@ -286,3 +286,31 @@ def test_patch_status_mocked():
         assert data.get("status") == "RESOLVED"
 
 
+def test_pwa_service_worker_route():
+    """Verify Person C Day 5 Service Worker /sw.js route."""
+    response = client.get("/sw.js")
+    assert response.status_code == 200
+    assert "javascript" in response.headers.get("content-type", "")
+    assert "supplier-saarthi" in response.text.lower()
+
+
+def test_pwa_manifest_route():
+    """Verify Person C Day 5 PWA manifest /manifest.json route."""
+    response = client.get("/manifest.json")
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("name") == "Supplier Saarthi"
+    assert data.get("short_name") == "Saarthi"
+    assert data.get("display") == "standalone"
+
+
+def test_base_template_has_pwa_tags():
+    """Verify base template includes PWA manifest link and service worker script."""
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+    assert 'rel="manifest"' in html
+    assert 'serviceWorker.register' in html
+
+
+
