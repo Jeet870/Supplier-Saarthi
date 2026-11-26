@@ -4,6 +4,7 @@ POST /api/transcribe  audio file in, {"text": "..."} out (Groq Whisper)
 POST /api/extract     {"text": "..."} in, a DRAFT record, a read-back sentence and a question if needed out
 """
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 from typing import Literal, Optional
 
 from fastapi import APIRouter, File, UploadFile
@@ -100,6 +101,8 @@ class ExtractRequest(BaseModel):
     # Optional. If the screen already knows (Delivery Check or Promise Note button), send it.
     # If left out, we work out the kind from the sentence.
     kind: Optional[Literal["delivery", "promise"]] = None
+    # Optional. Only for tests: pretend today is this date ("kal", "agle hafte" are worked out from it).
+    today: Optional[date] = None
 
 
 def _empty_record(record_type: Optional[str], transcript: str) -> dict:
@@ -166,7 +169,7 @@ def extract(body: ExtractRequest):
 
     record_types = [DELIVERY if k == "delivery" else PROMISE for k in kinds]
     with ThreadPoolExecutor(max_workers=len(record_types)) as pool:
-        futures = [pool.submit(extract_record, rt, text, suppliers, products) for rt in record_types]
+        futures = [pool.submit(extract_record, rt, text, suppliers, products, body.today) for rt in record_types]
         results = [f.result() for f in futures]
 
     items = []
